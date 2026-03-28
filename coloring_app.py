@@ -66,7 +66,7 @@ class ColoringApp:
         self.trash_y = 500
         self.trash_width = 60
         self.trash_height = 60
-        self.trash_id = self.canvas.create_rectangle(
+        self.canvas.create_rectangle(
             self.trash_x, self.trash_y,
             self.trash_x + self.trash_width, self.trash_y + self.trash_height,
             fill="lightcoral", outline="black", width=2

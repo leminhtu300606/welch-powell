@@ -131,7 +131,6 @@ class WelshPowellApp:
         
         # Cho drag từ toolbar
         self.dragging_from_toolbar = False
-        self.toolbar_button_image = None
         
         # Màu sắc
         self.colors = [
@@ -465,7 +464,6 @@ class WelshPowellApp:
         self.root.config(cursor="arrow")
         
         # Kiểm tra xem có thả vào canvas không
-        canvas_coords = self.canvas.winfo_geometry()
         canvas_x = self.canvas.winfo_x()
         canvas_y = self.canvas.winfo_y()
         canvas_width = self.canvas.winfo_width()

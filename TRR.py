@@ -1,142 +1,28 @@
 import tkinter as tk
 from tkinter import messagebox
 import string
+from ui import setup_interface
 
 class WelshPowellApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Thuật toán Welch-Powell ")
-        self.root.geometry("1100x700")
-        
-        # Frame chính chứa toolbar + canvas
-        main_frame = tk.Frame(self.root)
-        main_frame.pack(fill="both", expand=True)
-        
-        # ========== TOOLBAR BÊN TRÁI ==========
-        self.toolbar = tk.Frame(main_frame, bg="#2c3e50", width=120, relief="sunken", bd=2)
-        self.toolbar.pack(side="left", fill="y", padx=5, pady=5)
-        self.toolbar.pack_propagate(False)
-        
-        # Tiêu đề toolbar
-        tk.Label(
-            self.toolbar,
-            text="🛠️ Công Cụ",
-            font=("Arial", 11, "bold"),
-            bg="#2c3e50",
-            fg="white"
-        ).pack(pady=10)
-        
-        # Nút thêm nút
-        self.node_btn = tk.Button(
-            self.toolbar,
-            text="➕ Nút Mới",
-            font=("Arial", 10, "bold"),
-            bg="#3498db",
-            fg="white",
-            cursor="hand2",
-            width=12,
-            height=2
-        )
-        self.node_btn.pack(pady=10)
-        self.node_btn.bind("<Button-1>", self.on_toolbar_button_press)
-        self.node_btn.bind("<B1-Motion>", self.on_toolbar_button_drag)
-        self.node_btn.bind("<ButtonRelease-1>", self.on_toolbar_button_release)
-        
-        # Khoảng cách
-        tk.Label(self.toolbar, bg="#2c3e50").pack(pady=10)
-        
-        # Chế độ
-        tk.Label(
-            self.toolbar,
-            text="Chế độ:",
-            font=("Arial", 10, "bold"),
-            bg="#2c3e50",
-            fg="white"
-        ).pack(pady=5)
-        
-        self.mode_var = tk.StringVar(value="move")
-        
-        tk.Radiobutton(
-            self.toolbar, text="Di chuyển",
-            variable=self.mode_var, value="move",
-            bg="#2c3e50", fg="white", selectcolor="#34495e",
-            font=("Arial", 9)
-        ).pack(anchor="w", padx=10)
-        
-        tk.Radiobutton(
-            self.toolbar, text="Xóa nút",
-            variable=self.mode_var, value="delete",
-            bg="#2c3e50", fg="white", selectcolor="#34495e",
-            font=("Arial", 9)
-        ).pack(anchor="w", padx=10)
-        
-        tk.Radiobutton(
-            self.toolbar, text="Nối nút",
-            variable=self.mode_var, value="connect",
-            bg="#2c3e50", fg="white", selectcolor="#34495e",
-            font=("Arial", 9)
-        ).pack(anchor="w", padx=10)
-        
-        tk.Radiobutton(
-            self.toolbar, text="Xóa cạnh",
-            variable=self.mode_var, value="delete_edge",
-            bg="#2c3e50", fg="white", selectcolor="#34495e",
-            font=("Arial", 9)
-        ).pack(anchor="w", padx=10)
-        
-        # Khoảng cách
-        tk.Label(self.toolbar, bg="#2c3e50").pack(pady=20, expand=True)
-        
-        # Nút chạy thuật toán
-        self.run_btn = tk.Button(
-            self.toolbar,
-            text="▶ Chạy",
-            font=("Arial", 11, "bold"),
-            bg="#27ae60",
-            fg="white",
-            cursor="hand2",
-            width=12,
-            height=2,
-            command=self.on_apply_algorithm
-        )
-        self.run_btn.pack(pady=10)
-        
-        # ========== CANVAS GIỮA ==========
-        canvas_frame = tk.Frame(main_frame)
-        canvas_frame.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        self.canvas = tk.Canvas(canvas_frame, bg="lightblue", cursor="arrow")
-        self.canvas.pack(fill="both", expand=True)
-        
-        # Danh sách các nút
         self.nodes = []
         self.selected_node = None
         self.drag_start = None
-        
-        # Danh sách các cạnh
+
         self.edges = []
         self.first_node_for_connection = None
-        
-        # Cho drag từ toolbar
+
         self.dragging_from_toolbar = False
-        
-        # Màu sắc
+        self.toolbar_dragged = False
+
         self.colors = [
             "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8",
             "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B88B", "#81ECEC"
         ]
-        
-        # Bind sự kiện canvas
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
-        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
-        self.canvas.bind("<Control-Button-1>", self.on_ctrl_click)
-        self.canvas.bind("<Button-3>", self.on_right_click)
-        
-        # Tạo vài nút mặc định
-        self.create_node(200, 150, "A", "white")
-        self.create_node(400, 150, "B", "white")
-        self.create_node(600, 150, "C", "white")
-    
+
+        setup_interface(self)
+
     def create_node(self, x, y, label, color):
         """Tạo một nút hình tròn"""
         node_id = len(self.nodes)
@@ -240,10 +126,10 @@ class WelshPowellApp:
         if self.mode_var.get() == "move" and self.selected_node and self.drag_start:
             dx = event.x - self.drag_start[0]
             dy = event.y - self.drag_start[1]
-            
+
             self.selected_node["x"] += dx
             self.selected_node["y"] += dy
-            
+
             radius = self.selected_node["radius"]
             self.canvas.coords(
                 self.selected_node["circle"],
@@ -260,34 +146,6 @@ class WelshPowellApp:
             self.drag_start = (event.x, event.y)
             self.redraw_edges()
 
-    def on_ctrl_click(self, event):
-        """Xử lý CTRL+click để nối hai nút"""
-        node = self.get_node_at(event.x, event.y)
-        if node:
-            if self.first_node_for_connection is None:
-                self.first_node_for_connection = node
-                self.canvas.itemconfig(node["circle"], outline="red", width=3)
-                messagebox.showinfo("Liên kết", f"Đã chọn nút {node['label']}. CTRL+Click nút thứ 2!")
-            else:
-                if node["id"] == self.first_node_for_connection["id"]:
-                    messagebox.showwarning("Lỗi", "Không thể liên kết nút với chính nó!")
-                else:
-                    self.connect_nodes(self.first_node_for_connection, node)
-                self.canvas.itemconfig(self.first_node_for_connection["circle"], outline="black", width=2)
-                self.first_node_for_connection = None
-
-    def on_right_click(self, event):
-        """Xử lý click phải để xóa cạnh"""
-        edge = self.get_edge_at(event.x, event.y)
-        if edge:
-            node1 = self.nodes[edge["node1_id"]]
-            node2 = self.nodes[edge["node2_id"]]
-            result = messagebox.askyesno("Xóa cạnh", f"Bạn có muốn xóa cạnh giữa {node1['label']} và {node2['label']}?")
-            if result:
-                self.delete_edge(edge)
-        else:
-            messagebox.showinfo("Thông báo", "Không có cạnh nào tại vị trí này!")
-
     def on_apply_algorithm(self, event=None):
         """Khởi động thuật toán tô màu"""
         if not self.nodes:
@@ -298,9 +156,9 @@ class WelshPowellApp:
     def on_canvas_click(self, event):
         """Xử lý khi click trên canvas"""
         self.selected_node = self.get_node_at(event.x, event.y)
-        
+
         mode = self.mode_var.get()
-        
+
         if mode == "delete":
             if self.selected_node:
                 self.delete_node(self.selected_node)
@@ -308,16 +166,12 @@ class WelshPowellApp:
             if self.selected_node:
                 if self.first_node_for_connection is None:
                     self.first_node_for_connection = self.selected_node
-                    # Highlight
                     self.canvas.itemconfig(self.selected_node["circle"], width=4, outline="red")
                 elif self.selected_node == self.first_node_for_connection:
-                    # Deselect if clicking the same node
                     self.canvas.itemconfig(self.selected_node["circle"], width=2, outline="black")
                     self.first_node_for_connection = None
                 else:
-                    # Connect to different node
                     self.connect_nodes(self.first_node_for_connection, self.selected_node)
-                    # Reset highlight
                     self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
                     self.first_node_for_connection = None
         elif mode == "delete_edge":
@@ -326,17 +180,25 @@ class WelshPowellApp:
                 self.delete_edge(edge)
             else:
                 messagebox.showwarning("Thông báo", "Không có cạnh nào tại vị trí này!")
-        else:  # move
+        else:
             if self.selected_node:
-                # Highlight nút được chọn
-                self.canvas.itemconfig(
-                    self.selected_node["circle"],
-                    width=3
-                )
-            
+                self.canvas.itemconfig(self.selected_node["circle"], width=3)
             self.drag_start = (event.x, event.y)
-    
-    
+
+    def on_ctrl_click(self, event):
+        """Tạo nút mới khi Ctrl+click trên canvas"""
+        x, y = event.x, event.y
+        new_node_count = len(self.nodes)
+        alphabet = list(string.ascii_uppercase)
+        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        self.create_node(x, y, label, "white")
+
+    def on_right_click(self, event):
+        """Hủy lựa chọn kết nối khi click phải"""
+        if self.first_node_for_connection is not None:
+            self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
+            self.first_node_for_connection = None
+
     def delete_node(self, node):
         """Xóa một nút"""
         # Xóa đường vẽ
@@ -399,35 +261,53 @@ class WelshPowellApp:
     def on_toolbar_button_press(self, event):
         """Xử lý khi bấm nút 'Nút Mới' trong toolbar"""
         self.dragging_from_toolbar = True
-    
+        self.toolbar_dragged = False
+
+    def on_toolbar_button_click(self):
+        """Xử lý click bình thường trên nút 'Nút Mới'"""
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+        x = canvas_width // 2
+        y = canvas_height // 2
+        new_node_count = len(self.nodes)
+        alphabet = list(string.ascii_uppercase)
+        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        self.create_node(x, y, label, "white")
+
     def on_toolbar_button_drag(self, event):
         """Xử lý khi kéo nút 'Nút Mới' từ toolbar"""
         if self.dragging_from_toolbar:
-            # Đổi con trỏ chuột
+            self.toolbar_dragged = True
             self.root.config(cursor="hand2")
-    
+
     def on_toolbar_button_release(self, event):
         """Xử lý khi thả nút từ toolbar"""
         self.dragging_from_toolbar = False
         self.root.config(cursor="arrow")
-        
-        # Kiểm tra xem có thả vào canvas không
-        canvas_x = self.canvas.winfo_x()
-        canvas_y = self.canvas.winfo_y()
+
+        canvas_x = self.canvas.winfo_rootx()
+        canvas_y = self.canvas.winfo_rooty()
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        
-        if (canvas_x <= event.x_root <= canvas_x + canvas_width and
-            canvas_y <= event.y_root <= canvas_y + canvas_height):
-            # Tạo nút mới tại vị trí thả
+
+        inside_canvas = (
+            canvas_x <= event.x_root <= canvas_x + canvas_width and
+            canvas_y <= event.y_root <= canvas_y + canvas_height
+        )
+
+        if inside_canvas:
             x = event.x_root - canvas_x
             y = event.y_root - canvas_y
-            
-            new_node_count = len(self.nodes)
-            alphabet = list(string.ascii_uppercase)
-            label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
-            
-            self.create_node(x, y, label, "white")
+        elif not self.toolbar_dragged:
+            x = canvas_width // 2
+            y = canvas_height // 2
+        else:
+            return
+
+        new_node_count = len(self.nodes)
+        alphabet = list(string.ascii_uppercase)
+        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        self.create_node(x, y, label, "white")
 
     def welsh_powell_coloring(self):
         """Thuật toán Welch-Powell - tối ưu"""

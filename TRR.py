@@ -108,18 +108,6 @@ class WelshPowellApp:
         self.canvas = tk.Canvas(canvas_frame, bg="lightblue", cursor="arrow")
         self.canvas.pack(fill="both", expand=True)
         
-        # ========== HƯỚNG DẪN DƯỚI CÙNG ==========
-        self.info_label = tk.Label(
-            self.root, 
-            text="💡 Kéo 'Nút Mới' từ toolbar vào canvas | Chọn chế độ: Di chuyển (kéo nút), Xóa nút (click nút), Nối nút (click 2 nút), Xóa cạnh (click cạnh) | ▶ để chạy thuật toán",
-            bg="lightyellow",
-            padx=10,
-            pady=8,
-            wraplength=1000,
-            justify="left"
-        )
-        self.info_label.pack(fill="x")
-        
         # Danh sách các nút
         self.nodes = []
         self.selected_node = None
@@ -166,8 +154,7 @@ class WelshPowellApp:
             "degree": 0
         }
         
-        # Vẽ hình tròn
-        circle_id = self.canvas.create_oval(
+        node_data["circle"] = self.canvas.create_oval(
             x - radius, y - radius,
             x + radius, y + radius,
             fill=color,
@@ -175,69 +162,139 @@ class WelshPowellApp:
             width=2
         )
         
-        # Vẽ text
-        text_id = self.canvas.create_text(
+        node_data["text"] = self.canvas.create_text(
             x, y,
             text=label,
             fill="black",
             font=("Arial", 12, "bold")
         )
         
-        node_data["circle"] = circle_id
-        node_data["text"] = text_id
         self.nodes.append(node_data)
-    
+
     def get_node_at(self, x, y):
-        """Tìm nút tại vị trí (x, y) - tối ưu với lặp ngược"""
+        """Tìm nút tại vị trí (x, y)"""
         for node in reversed(self.nodes):
             if (x - node["x"]) ** 2 + (y - node["y"]) ** 2 <= node["radius"] ** 2:
                 return node
         return None
-    
+
     def redraw_edges(self):
-        """Vẽ lại tất cả các cạnh - tối ưu bằng xóa và vẽ một lần"""
+        """Vẽ lại tất cả các cạnh hiện có"""
         for edge in self.edges:
-            if "line" in edge:
+            if "line" in edge and edge["line"] is not None:
                 self.canvas.delete(edge["line"])
+                edge["line"] = None
         
         for edge in self.edges:
-            n1, n2 = self.nodes[edge["node1_id"]], self.nodes[edge["node2_id"]]
+            n1 = self.nodes[edge["node1_id"]]
+            n2 = self.nodes[edge["node2_id"]]
             edge["line"] = self.canvas.create_line(
-                n1["x"], n1["y"], n2["x"], n2["y"], fill="gray", width=2
+                n1["x"], n1["y"], n2["x"], n2["y"],
+                fill="gray", width=2, tags="edge"
             )
-    
+
     def get_edge_at(self, x, y, tolerance=5):
-        """Tìm cạnh gần với tọa độ (x, y) - tối ưu"""
+        """Tìm cạnh gần điểm click"""
+        # Dùng canvas.find_overlapping để tìm cạnh nếu có.
+        overlap = self.canvas.find_overlapping(
+            x - tolerance, y - tolerance,
+            x + tolerance, y + tolerance
+        )
+        for item in overlap:
+            for edge in self.edges:
+                if edge.get("line") == item:
+                    return edge
+
+        # Nếu không tìm thấy bằng canvas, dùng dự phòng bằng toán học.
         tol_sq = tolerance ** 2
-        
         for edge in self.edges:
-            if "line" not in edge:
+            if "line" not in edge or edge["line"] is None:
                 continue
-            
-            n1, n2 = self.nodes[edge["node1_id"]], self.nodes[edge["node2_id"]]
-            x1, y1, x2, y2 = n1["x"], n1["y"], n2["x"], n2["y"]
-            
-            # Kiểm tra nhanh: điểm có trong bounding box không
+
+            n1 = self.nodes[edge["node1_id"]]
+            n2 = self.nodes[edge["node2_id"]]
+            x1, y1 = n1["x"], n1["y"]
+            x2, y2 = n2["x"], n2["y"]
+
             if not (min(x1, x2) - tolerance <= x <= max(x1, x2) + tolerance and
                     min(y1, y2) - tolerance <= y <= max(y1, y2) + tolerance):
                 continue
-            
-            # Tính khoảng cách từ điểm đến đường thẳng
-            dx, dy = x2 - x1, y2 - y1
+
+            dx = x2 - x1
+            dy = y2 - y1
             dd = dx * dx + dy * dy
             if dd == 0:
                 continue
-            
+
             t = max(0, min(1, ((x - x1) * dx + (y - y1) * dy) / dd))
             closest_x = x1 + t * dx
             closest_y = y1 + t * dy
-            
+
             dist_sq = (x - closest_x) ** 2 + (y - closest_y) ** 2
             if dist_sq <= tol_sq:
                 return edge
-        
         return None
-    
+
+    def on_canvas_drag(self, event):
+        """Xử lý khi kéo chuột trên canvas"""
+        if self.mode_var.get() == "move" and self.selected_node and self.drag_start:
+            dx = event.x - self.drag_start[0]
+            dy = event.y - self.drag_start[1]
+            
+            self.selected_node["x"] += dx
+            self.selected_node["y"] += dy
+            
+            radius = self.selected_node["radius"]
+            self.canvas.coords(
+                self.selected_node["circle"],
+                self.selected_node["x"] - radius,
+                self.selected_node["y"] - radius,
+                self.selected_node["x"] + radius,
+                self.selected_node["y"] + radius
+            )
+            self.canvas.coords(
+                self.selected_node["text"],
+                self.selected_node["x"],
+                self.selected_node["y"]
+            )
+            self.drag_start = (event.x, event.y)
+            self.redraw_edges()
+
+    def on_ctrl_click(self, event):
+        """Xử lý CTRL+click để nối hai nút"""
+        node = self.get_node_at(event.x, event.y)
+        if node:
+            if self.first_node_for_connection is None:
+                self.first_node_for_connection = node
+                self.canvas.itemconfig(node["circle"], outline="red", width=3)
+                messagebox.showinfo("Liên kết", f"Đã chọn nút {node['label']}. CTRL+Click nút thứ 2!")
+            else:
+                if node["id"] == self.first_node_for_connection["id"]:
+                    messagebox.showwarning("Lỗi", "Không thể liên kết nút với chính nó!")
+                else:
+                    self.connect_nodes(self.first_node_for_connection, node)
+                self.canvas.itemconfig(self.first_node_for_connection["circle"], outline="black", width=2)
+                self.first_node_for_connection = None
+
+    def on_right_click(self, event):
+        """Xử lý click phải để xóa cạnh"""
+        edge = self.get_edge_at(event.x, event.y)
+        if edge:
+            node1 = self.nodes[edge["node1_id"]]
+            node2 = self.nodes[edge["node2_id"]]
+            result = messagebox.askyesno("Xóa cạnh", f"Bạn có muốn xóa cạnh giữa {node1['label']} và {node2['label']}?")
+            if result:
+                self.delete_edge(edge)
+        else:
+            messagebox.showinfo("Thông báo", "Không có cạnh nào tại vị trí này!")
+
+    def on_apply_algorithm(self, event=None):
+        """Khởi động thuật toán tô màu"""
+        if not self.nodes:
+            messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
+            return
+        self.welsh_powell_coloring()
+
     def on_canvas_click(self, event):
         """Xử lý khi click trên canvas"""
         self.selected_node = self.get_node_at(event.x, event.y)
@@ -279,118 +336,7 @@ class WelshPowellApp:
             
             self.drag_start = (event.x, event.y)
     
-    def on_canvas_drag(self, event):
-        """Xử lý khi kéo chuột trên canvas"""
-        if self.mode_var.get() == "move" and self.selected_node and self.drag_start:
-            dx = event.x - self.drag_start[0]
-            dy = event.y - self.drag_start[1]
-            
-            # Di chuyển nút
-            self.selected_node["x"] += dx
-            self.selected_node["y"] += dy
-            
-            radius = self.selected_node["radius"]
-            
-            # Cập nhật vị trí hình tròn trên canvas
-            self.canvas.coords(
-                self.selected_node["circle"],
-                self.selected_node["x"] - radius,
-                self.selected_node["y"] - radius,
-                self.selected_node["x"] + radius,
-                self.selected_node["y"] + radius
-            )
-            
-            # Cập nhật vị trí text
-            self.canvas.coords(
-                self.selected_node["text"],
-                self.selected_node["x"],
-                self.selected_node["y"]
-            )
-            
-            self.drag_start = (event.x, event.y)
-        
-        # Vẽ lại các cạnh sau khi di chuyển
-        self.redraw_edges()
     
-    def on_ctrl_click(self, event):
-        """Xử lý CTRL+Click để tạo cạnh"""
-        node = self.get_node_at(event.x, event.y)
-        
-        if node:
-            if self.first_node_for_connection is None:
-                self.first_node_for_connection = node
-                self.canvas.itemconfig(node["circle"], outline="red", width=3)
-                messagebox.showinfo("Liên kết", f"Đã chọn nút {node['label']}. CTRL+Click nút thứ 2!")
-            else:
-                if node["id"] == self.first_node_for_connection["id"]:
-                    messagebox.showwarning("Lỗi", "Không thể liên kết nút với chính nó!")
-                else:
-                    n1_id, n2_id = self.first_node_for_connection["id"], node["id"]
-                    
-                    # Kiểm tra cạnh tồn tại - tối ưu
-                    if any((e["node1_id"] == n1_id and e["node2_id"] == n2_id) or 
-                           (e["node1_id"] == n2_id and e["node2_id"] == n1_id) for e in self.edges):
-                        messagebox.showwarning("Lỗi", "Cạnh này đã tồn tại!")
-                    else:
-                        self.edges.append({"node1_id": n1_id, "node2_id": n2_id, "line": None})
-                        self.nodes[n1_id]["degree"] += 1
-                        self.nodes[n2_id]["degree"] += 1
-                        self.redraw_edges()
-                        # messagebox.showinfo("Liên kết", f"Đã liên kết {self.first_node_for_connection['label']} ↔ {node['label']}")
-                
-                self.canvas.itemconfig(self.first_node_for_connection["circle"], outline="black", width=2)
-                self.first_node_for_connection = None
-    
-    def on_right_click(self, event):
-        """Xử lý Right-click để xóa cạnh"""
-        edge = self.get_edge_at(event.x, event.y)
-        
-        if edge:
-            node1 = self.nodes[edge["node1_id"]]
-            node2 = self.nodes[edge["node2_id"]]
-            
-            result = messagebox.askyesno(
-                "Xóa cạnh",
-                f"Bạn có muốn xóa cạnh giữa {node1['label']} và {node2['label']}?"
-            )
-            
-            if result:
-                # Cập nhật bậc
-                node1["degree"] -= 1
-                node2["degree"] -= 1
-                
-                self.edges.remove(edge)
-                self.redraw_edges()
-        else:
-            messagebox.showinfo("Thông báo", "Không có cạnh nào tại vị trí này!")
-    
-    def on_double_click(self, event):
-        """Xóa nút khi double-click"""
-        node = self.get_node_at(event.x, event.y)
-        if node:
-            # Xóa đường vẽ
-            self.canvas.delete(node["circle"])
-            self.canvas.delete(node["text"])
-            
-            # Xóa tất cả các cạnh liên quan đến nút này
-            edges_to_remove = [
-                e for e in self.edges
-                if e["node1_id"] == node["id"] or e["node2_id"] == node["id"]
-            ]
-            
-            # Cập nhật bậc khi xóa cạnh
-            for edge in edges_to_remove:
-                other_node_id = edge["node2_id"] if edge["node1_id"] == node["id"] else edge["node1_id"]
-                self.nodes[other_node_id]["degree"] -= 1
-            
-            self.edges = [e for e in self.edges if e not in edges_to_remove]
-            
-            # Xóa nút khỏi danh sách
-            self.nodes.remove(node)
-            
-            # Vẽ lại các cạnh
-            self.redraw_edges()
-            
     def delete_node(self, node):
         """Xóa một nút"""
         # Xóa đường vẽ
@@ -440,11 +386,13 @@ class WelshPowellApp:
         """Xóa một cạnh"""
         node1 = self.nodes[edge["node1_id"]]
         node2 = self.nodes[edge["node2_id"]]
-        
+
         # Cập nhật bậc
         node1["degree"] -= 1
         node2["degree"] -= 1
-        
+
+        if edge.get("line") is not None:
+            self.canvas.delete(edge["line"])
         self.edges.remove(edge)
         self.redraw_edges()
     
@@ -480,16 +428,7 @@ class WelshPowellApp:
             label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
             
             self.create_node(x, y, label, "white")
-    
-    def on_apply_algorithm(self, event=None):
-        """Áp dụng thuật toán Welch-Powell"""
-        if len(self.nodes) == 0:
-            messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
-            return
-        
-        # Chạy thuật toán Welch-Powell
-        self.welsh_powell_coloring()
-    
+
     def welsh_powell_coloring(self):
         """Thuật toán Welch-Powell - tối ưu"""
         # Bước 1: Sắp xếp nút theo bậc giảm dần

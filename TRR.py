@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import string
 from ui import setup_interface
+from welsh_powell import welsh_powell_coloring
 
 class WelshPowellApp:
     def __init__(self, root):
@@ -310,47 +311,25 @@ class WelshPowellApp:
         self.create_node(x, y, label, "white")
 
     def welsh_powell_coloring(self):
-        """Thuật toán Welch-Powell - tối ưu"""
-        # Bước 1: Sắp xếp nút theo bậc giảm dần
-        sorted_nodes = sorted(enumerate(self.nodes), key=lambda x: x[1]["degree"], reverse=True)
-        
-        # Bước 2-3: Gán màu
-        node_colors = [-1] * len(self.nodes)
-        node_colors[sorted_nodes[0][0]] = 0
-        
-        for idx, _ in sorted_nodes[1:]:
-            # Tìm màu các hàng xóm - tối ưu
-            neighbor_colors = set()
-            for edge in self.edges:
-                if edge["node1_id"] == idx and node_colors[edge["node2_id"]] != -1:
-                    neighbor_colors.add(node_colors[edge["node2_id"]])
-                elif edge["node2_id"] == idx and node_colors[edge["node1_id"]] != -1:
-                    neighbor_colors.add(node_colors[edge["node1_id"]])
-            
-            # Tìm màu nhỏ nhất
-            color = 0
-            while color in neighbor_colors:
-                color += 1
-            
-            node_colors[idx] = color
-        
-        # Cập nhật canvas
+        """Gọi hàm Welsh-Powell đã tách riêng và cập nhật giao diện."""
+        node_colors = welsh_powell_coloring(self.nodes, self.edges)
+        if not node_colors:
+            messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
+            return
+
         max_color = max(node_colors)
         for i, color_idx in enumerate(node_colors):
             self.nodes[i]["color"] = self.colors[color_idx % len(self.colors)]
             self.canvas.itemconfig(self.nodes[i]["circle"], fill=self.nodes[i]["color"])
-        
-        # Hiển thị kết quả - tối ưu
+
         result = f"Kết quả Welch-Powell:\n\nSố màu cần thiết: {max_color + 1}\n\nPhân bổ màu:\n"
         for color_idx in range(max_color + 1):
             nodes_in_color = [self.nodes[i]['label'] for i, c in enumerate(node_colors) if c == color_idx]
             result += f"Màu {color_idx}: {', '.join(nodes_in_color)}\n"
-        
-        # Tạo cửa sổ kết quả
+
         result_window = tk.Toplevel(self.root)
         result_window.title("Kết quả Tô Màu")
         result_window.geometry("400x300")
-        
         tk.Label(result_window, text=result, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
 
 if __name__ == "__main__":

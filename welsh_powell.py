@@ -1,38 +1,39 @@
-"""Thuật toán Welsh-Powell tách riêng khỏi giao diện.
-
-Hàm trong module này chỉ xử lý việc gán màu cho các nút dựa trên
-độ lớn của bậc và danh sách các cạnh.
-"""
 
 from typing import List, Dict
 
-
 def welsh_powell_coloring(nodes: List[Dict], edges: List[Dict]) -> List[int]:
-    """Trả về danh sách màu cho từng nút theo thuật toán Welsh-Powell."""
+    """Tính chỉ số màu của từng nút theo thuật toán Welsh-Powell."""
     if not nodes:
         return []
 
-    sorted_nodes = sorted(
+    indexed_nodes = sorted(
         enumerate(nodes),
-        key=lambda x: x[1]["degree"],
+        key=lambda pair: pair[1]["degree"],
         reverse=True
     )
 
-    node_colors = [-1] * len(nodes)
-    node_colors[sorted_nodes[0][0]] = 0
+    assigned_colors = [-1] * len(nodes)
+    first_node_index = indexed_nodes[0][0]
+    assigned_colors[first_node_index] = 0
 
-    for idx, _ in sorted_nodes[1:]:
-        neighbor_colors = set()
+    for node_index, _node_data in indexed_nodes[1:]:
+        used_neighbor_colors = set()
         for edge in edges:
-            if edge["node1_id"] == idx and node_colors[edge["node2_id"]] != -1:
-                neighbor_colors.add(node_colors[edge["node2_id"]])
-            elif edge["node2_id"] == idx and node_colors[edge["node1_id"]] != -1:
-                neighbor_colors.add(node_colors[edge["node1_id"]])
+            if edge["node1_id"] == node_index:
+                neighbor_index = edge["node2_id"]
+                neighbor_color = assigned_colors[neighbor_index]
+                if neighbor_color != -1:
+                    used_neighbor_colors.add(neighbor_color)
+            elif edge["node2_id"] == node_index:
+                neighbor_index = edge["node1_id"]
+                neighbor_color = assigned_colors[neighbor_index]
+                if neighbor_color != -1:
+                    used_neighbor_colors.add(neighbor_color)
 
-        color = 0
-        while color in neighbor_colors:
-            color += 1
+        color_to_assign = 0
+        while color_to_assign in used_neighbor_colors:
+            color_to_assign += 1
 
-        node_colors[idx] = color
+        assigned_colors[node_index] = color_to_assign
 
-    return node_colors
+    return assigned_colors

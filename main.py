@@ -24,6 +24,53 @@ class WelshPowellApp:
 
         setup_interface(self)
 
+    def toggle_mode(self, mode):
+        """Bật/tắt chế độ thao tác bằng checkbox; mặc định là 'move'."""
+        current_mode = self.mode_var.get()
+        mode_is_checked = self.tool_vars[mode].get()
+
+        if mode_is_checked:
+            self.mode_var.set(mode)
+            for other_mode, var in self.tool_vars.items():
+                if other_mode != mode:
+                    var.set(False)
+        elif current_mode == mode:
+            self.mode_var.set("move")
+
+        if self.mode_var.get() != "connect" and self.first_node_for_connection is not None:
+            self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
+            self.first_node_for_connection = None
+
+        self.update_tool_button_styles()
+
+    def update_tool_button_styles(self):
+        """Đồng bộ trạng thái tick với mode hiện tại."""
+        active_mode = self.mode_var.get()
+        for mode, check in self.tool_checks.items():
+            is_active = active_mode == mode
+            self.tool_vars[mode].set(is_active)
+            check.config(
+                bg="#1f618d" if is_active else "#2c3e50",
+                selectcolor="#1f618d" if is_active else "#34495e"
+            )
+
+    def _reindex_nodes(self):
+        """Giữ id nút khớp với vị trí trong danh sách để tránh lệch tham chiếu cạnh."""
+        old_to_new_id = {node["id"]: index for index, node in enumerate(self.nodes)}
+
+        for new_id, node in enumerate(self.nodes):
+            node["id"] = new_id
+
+        valid_edges = []
+        for edge in self.edges:
+            old_n1 = edge["node1_id"]
+            old_n2 = edge["node2_id"]
+            if old_n1 in old_to_new_id and old_n2 in old_to_new_id:
+                edge["node1_id"] = old_to_new_id[old_n1]
+                edge["node2_id"] = old_to_new_id[old_n2]
+                valid_edges.append(edge)
+        self.edges = valid_edges
+
     def create_node(self, x, y, label, color):
         """Tạo một nút hình tròn"""
         node_id = len(self.nodes)
@@ -186,19 +233,6 @@ class WelshPowellApp:
                 self.canvas.itemconfig(self.selected_node["circle"], width=3)
             self.drag_start = (event.x, event.y)
 
-    def on_ctrl_click(self, event):
-        """Tạo nút mới khi Ctrl+click trên canvas"""
-        x, y = event.x, event.y
-        new_node_count = len(self.nodes)
-        label = str(new_node_count + 1)
-        self.create_node(x, y, label, "white")
-
-    def on_right_click(self, event):
-        """Hủy lựa chọn kết nối khi click phải"""
-        if self.first_node_for_connection is not None:
-            self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
-            self.first_node_for_connection = None
-
     def delete_node(self, node):
         """Xóa một nút"""
         # Xóa đường vẽ
@@ -213,13 +247,23 @@ class WelshPowellApp:
         
         # Cập nhật bậc khi xóa cạnh
         for edge in edges_to_remove:
+            if edge.get("line") is not None:
+                self.canvas.delete(edge["line"])
             other_node_id = edge["node2_id"] if edge["node1_id"] == node["id"] else edge["node1_id"]
-            self.nodes[other_node_id]["degree"] -= 1
+            if 0 <= other_node_id < len(self.nodes):
+                self.nodes[other_node_id]["degree"] = max(0, self.nodes[other_node_id]["degree"] - 1)
         
         self.edges = [e for e in self.edges if e not in edges_to_remove]
         
         # Xóa nút khỏi danh sách
         self.nodes.remove(node)
+
+        if self.selected_node == node:
+            self.selected_node = None
+        if self.first_node_for_connection == node:
+            self.first_node_for_connection = None
+
+        self._reindex_nodes()
         
         # Vẽ lại các cạnh
         self.redraw_edges()

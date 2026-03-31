@@ -190,8 +190,7 @@ class WelshPowellApp:
         """Tạo nút mới khi Ctrl+click trên canvas"""
         x, y = event.x, event.y
         new_node_count = len(self.nodes)
-        alphabet = list(string.ascii_uppercase)
-        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        label = str(new_node_count + 1)
         self.create_node(x, y, label, "white")
 
     def on_right_click(self, event):
@@ -271,8 +270,7 @@ class WelshPowellApp:
         x = canvas_width // 2
         y = canvas_height // 2
         new_node_count = len(self.nodes)
-        alphabet = list(string.ascii_uppercase)
-        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        label = str(new_node_count + 1)
         self.create_node(x, y, label, "white")
 
     def on_toolbar_button_drag(self, event):
@@ -306,8 +304,7 @@ class WelshPowellApp:
             return
 
         new_node_count = len(self.nodes)
-        alphabet = list(string.ascii_uppercase)
-        label = alphabet[new_node_count] if new_node_count < 26 else f"N{new_node_count}"
+        label = str(new_node_count + 1)
         self.create_node(x, y, label, "white")
 
     def welsh_powell_coloring(self):

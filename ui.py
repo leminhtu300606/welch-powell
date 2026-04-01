@@ -2,7 +2,7 @@ import tkinter as tk
 
 
 def setup_interface(app):
-    app.root.title("Thuat toan Welch-Powell")
+    app.root.title("Thuật toán Welch-Powell")
     app.root.geometry("1100x700")
 
     main_frame = tk.Frame(app.root)
@@ -14,7 +14,7 @@ def setup_interface(app):
 
     tk.Label(
         app.toolbar,
-        text="Cong Cu",
+        text="Công Cụ",
         font=("Arial", 11, "bold"),
         bg="#2c3e50",
         fg="white"
@@ -22,7 +22,7 @@ def setup_interface(app):
 
     app.node_btn = tk.Button(
         app.toolbar,
-        text="+ Nut Moi",
+        text="+ Nút Mới",
         font=("Arial", 10, "bold"),
         bg="#3498db",
         fg="white",
@@ -39,7 +39,7 @@ def setup_interface(app):
 
     tk.Label(
         app.toolbar,
-        text="Tac vu:",
+        text="Tác vụ:",
         font=("Arial", 10, "bold"),
         bg="#2c3e50",
         fg="white"
@@ -70,9 +70,9 @@ def setup_interface(app):
         app.tool_checks[mode] = check
         app.tool_vars[mode] = var
 
-    add_tool_check("Xoa nut", "delete")
-    add_tool_check("Noi nut", "connect")
-    add_tool_check("Xoa canh", "delete_edge")
+    add_tool_check("Xóa nút", "delete")
+    add_tool_check("Nối nút", "connect")
+    add_tool_check("Xóa cạnh", "delete_edge")
 
     app.update_tool_button_styles()
 
@@ -80,7 +80,7 @@ def setup_interface(app):
 
     app.run_btn = tk.Button(
         app.toolbar,
-        text="> Chay",
+        text="> Chạy",
         font=("Arial", 11, "bold"),
         bg="#27ae60",
         fg="white",

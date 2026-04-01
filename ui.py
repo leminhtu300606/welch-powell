@@ -116,6 +116,3 @@ def setup_interface(app):
     app.canvas.bind("<Button-4>", lambda event: on_mouse_wheel(app, event))     # Linux scroll up
     app.canvas.bind("<Button-5>", lambda event: on_mouse_wheel(app, event))     # Linux scroll down
 
-    # Reset zoom
-    app.canvas.bind("<Control-0>", app.reset_zoom)
-    app.root.bind("<Control-0>", app.reset_zoom)

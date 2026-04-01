@@ -16,7 +16,11 @@ class WelshPowellApp:
 
         self.dragging_from_toolbar = False
         self.toolbar_dragged = False
-
+        # Zoom và Pan
+        self.scale = 1.0
+        self.pan_x = 0
+        self.pan_y = 0
+        self.pan_start = None
         self.colors = [
             "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8",
             "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B88B", "#81ECEC"
@@ -29,6 +33,36 @@ class WelshPowellApp:
         if self.first_node_for_connection is not None:
             self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
             self.first_node_for_connection = None
+
+    def _world_to_canvas(self, wx, wy):
+        """Chuyển đổi từ tọa độ thế giới sang tọa độ canvas."""
+        cx = wx * self.scale + self.pan_x
+        cy = wy * self.scale + self.pan_y
+        return cx, cy
+
+    def _canvas_to_world(self, cx, cy):
+        """Chuyển đổi từ tọa độ canvas sang tọa độ thế giới."""
+        wx = (cx - self.pan_x) / self.scale
+        wy = (cy - self.pan_y) / self.scale
+        return wx, wy
+
+    def zoom_in(self, factor=1.2):
+        """Phóng to (zoom in)."""
+        self.scale *= factor
+        self.redraw_edges()
+
+    def zoom_out(self, factor=1.2):
+        """Thu nhỏ (zoom out)."""
+        self.scale /= factor
+        if self.scale < 0.1:
+            self.scale = 0.1
+        self.redraw_edges()
+
+    def pan_move(self, dx, dy):
+        """Di chuyển viewport (pan)."""
+        self.pan_x += dx
+        self.pan_y += dy
+        self.redraw_edges()
 
     def toggle_mode(self, mode):
         """Bật/tắt chế độ thao tác bằng checkbox; mặc định là 'move'."""
@@ -79,54 +113,70 @@ class WelshPowellApp:
             "circle": None, "text": None, "degree": 0
         }
         
+        cx, cy = self._world_to_canvas(x, y)
         node_data["circle"] = self.canvas.create_oval(
-            x - radius, y - radius, x + radius, y + radius,
+            cx - radius * self.scale, cy - radius * self.scale,
+            cx + radius * self.scale, cy + radius * self.scale,
             fill=color, outline="black", width=2
         )
         node_data["text"] = self.canvas.create_text(
-            x, y, text=label, fill="black", font=("Arial", 12, "bold")
+            cx, cy, text=label, fill="black", font=("Arial", 12, "bold")
         )
         self.nodes.append(node_data)
 
     def get_node_at(self, x, y):
-        """Tìm nút tại vị trí (x, y)"""
+        """Tìm nút tại vị trí (x, y) trên canvas"""
+        wx, wy = self._canvas_to_world(x, y)
         return next((node for node in reversed(self.nodes) 
-                    if (x - node["x"]) ** 2 + (y - node["y"]) ** 2 <= node["radius"] ** 2), None)
+                    if (wx - node["x"]) ** 2 + (wy - node["y"]) ** 2 <= (node["radius"] * self.scale) ** 2), None)
 
     def redraw_edges(self):
         """Vẽ lại tất cả các cạnh hiện có"""
-        for edge in self.edges:
-            if edge.get("line"):
-                self.canvas.delete(edge["line"])
-                edge["line"] = None
+        self.canvas.delete("all")
         
+        # Reset edge line IDs vì canvas đã bị xóa
+        for edge in self.edges:
+            edge["line"] = None
+        
+        # Vẽ lại tất cả các cạnh
         for edge in self.edges:
             n1 = self.nodes[edge["node1_id"]]
             n2 = self.nodes[edge["node2_id"]]
+            cx1, cy1 = self._world_to_canvas(n1["x"], n1["y"])
+            cx2, cy2 = self._world_to_canvas(n2["x"], n2["y"])
             edge["line"] = self.canvas.create_line(
-                n1["x"], n1["y"], n2["x"], n2["y"],
-                fill="gray", width=2, tags="edge"
+                cx1, cy1, cx2, cy2, fill="gray", width=2, tags="edge"
+            )
+        
+        # Vẽ lại tất cả các nút
+        for node in self.nodes:
+            cx, cy = self._world_to_canvas(node["x"], node["y"])
+            radius = node["radius"] * self.scale
+            node["circle"] = self.canvas.create_oval(
+                cx - radius, cy - radius, cx + radius, cy + radius,
+                fill=node["color"], outline="black", width=2
+            )
+            node["text"] = self.canvas.create_text(
+                cx, cy, text=node["label"], fill="black", font=("Arial", 12, "bold")
             )
 
     def get_edge_at(self, x, y, tolerance=5):
         """Tìm cạnh gần điểm click"""
-        overlap = self.canvas.find_overlapping(x - tolerance, y - tolerance, x + tolerance, y + tolerance)
-        for item in overlap:
-            edge = next((e for e in self.edges if e.get("line") == item), None)
-            if edge:
-                return edge
-
-        tol_sq = tolerance ** 2
+        wx, wy = self._canvas_to_world(x, y)
+        
+        tol_sq = (tolerance / self.scale) ** 2
         for edge in self.edges:
             if not edge.get("line"):
                 continue
 
             n1 = self.nodes[edge["node1_id"]]
             n2 = self.nodes[edge["node2_id"]]
-            x1, y1, x2, y2 = n1["x"], n1["y"], n2["x"], n2["y"]
+            x1, y1 = n1["x"], n1["y"]
+            x2, y2 = n2["x"], n2["y"]
 
-            if not (min(x1, x2) - tolerance <= x <= max(x1, x2) + tolerance and
-                    min(y1, y2) - tolerance <= y <= max(y1, y2) + tolerance):
+            tolerance_world = tolerance / self.scale
+            if not (min(x1, x2) - tolerance_world <= wx <= max(x1, x2) + tolerance_world and
+                    min(y1, y2) - tolerance_world <= wy <= max(y1, y2) + tolerance_world):
                 continue
 
             dx, dy = x2 - x1, y2 - y1
@@ -134,9 +184,9 @@ class WelshPowellApp:
             if dd == 0:
                 continue
 
-            t = max(0, min(1, ((x - x1) * dx + (y - y1) * dy) / dd))
+            t = max(0, min(1, ((wx - x1) * dx + (wy - y1) * dy) / dd))
             closest_x, closest_y = x1 + t * dx, y1 + t * dy
-            dist_sq = (x - closest_x) ** 2 + (y - closest_y) ** 2
+            dist_sq = (wx - closest_x) ** 2 + (wy - closest_y) ** 2
             
             if dist_sq <= tol_sq:
                 return edge
@@ -145,23 +195,20 @@ class WelshPowellApp:
     def on_canvas_drag(self, event):
         """Xử lý khi kéo chuột trên canvas"""
         if self.mode_var.get() == "move" and self.selected_node and self.drag_start:
-            dx = event.x - self.drag_start[0]
-            dy = event.y - self.drag_start[1]
+            dwx = (event.x - self.drag_start[0]) / self.scale
+            dwy = (event.y - self.drag_start[1]) / self.scale
 
-            self.selected_node["x"] += dx
-            self.selected_node["y"] += dy
+            self.selected_node["x"] += dwx
+            self.selected_node["y"] += dwy
 
-            radius = self.selected_node["radius"]
-            self.canvas.coords(self.selected_node["circle"],
-                              self.selected_node["x"] - radius,
-                              self.selected_node["y"] - radius,
-                              self.selected_node["x"] + radius,
-                              self.selected_node["y"] + radius)
-            self.canvas.coords(self.selected_node["text"],
-                              self.selected_node["x"],
-                              self.selected_node["y"])
             self.drag_start = (event.x, event.y)
             self.redraw_edges()
+        elif self.pan_start and "shift" in event.state.lower():
+            """Kéo để di chuyển view (Pan)"""
+            dx = event.x - self.pan_start[0]
+            dy = event.y - self.pan_start[1]
+            self.pan_move(dx, dy)
+            self.pan_start = (event.x, event.y)
 
     def on_canvas_click(self, event):
         """Xử lý khi click trên canvas"""
@@ -188,6 +235,24 @@ class WelshPowellApp:
         elif self.selected_node:
             self.canvas.itemconfig(self.selected_node["circle"], width=3)
             self.drag_start = (event.x, event.y)
+
+    def on_mouse_wheel(self, event):
+        """Xử lý zoom bằng scroll wheel"""
+        if event.num == 5 or event.delta < 0:
+            self.zoom_out()
+        elif event.num == 4 or event.delta > 0:
+            self.zoom_in()
+
+    def on_pan_start(self, event):
+        """Bắt đầu pan (di chuyển view)"""
+        self.pan_start = (event.x, event.y)
+
+    def reset_zoom(self, event=None):
+        """Reset zoom và pan về mặc định"""
+        self.scale = 1.0
+        self.pan_x = 0
+        self.pan_y = 0
+        self.redraw_edges()
 
     def delete_node(self, node):
         """Xóa một nút"""
@@ -259,7 +324,8 @@ class WelshPowellApp:
                         canvas_y <= event.y_root <= canvas_y + canvas_height)
 
         if inside_canvas:
-            x, y = event.x_root - canvas_x, event.y_root - canvas_y
+            cx, cy = event.x_root - canvas_x, event.y_root - canvas_y
+            x, y = self._canvas_to_world(cx, cy)
         elif self.toolbar_dragged:
             return
         else:

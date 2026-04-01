@@ -129,3 +129,16 @@ def setup_interface(app):
 
     app.canvas.bind("<Button-1>", app.on_canvas_click)
     app.canvas.bind("<B1-Motion>", app.on_canvas_drag)
+    
+    # Zoom bằng scroll wheel
+    app.canvas.bind("<MouseWheel>", app.on_mouse_wheel)  # Windows
+    app.canvas.bind("<Button-4>", app.on_mouse_wheel)     # Linux scroll up
+    app.canvas.bind("<Button-5>", app.on_mouse_wheel)     # Linux scroll down
+    
+    # Pan bằng Shift + Left Click + Drag
+    app.canvas.bind("<Shift-Button-1>", app.on_pan_start)
+    app.canvas.bind("<Shift-B1-Motion>", app.on_canvas_drag)
+    
+    # Reset zoom và pan
+    app.canvas.bind("<Control-0>", app.reset_zoom)
+    app.root.bind("<Control-0>", app.reset_zoom)

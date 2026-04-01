@@ -1,5 +1,12 @@
 import tkinter as tk
-
+from events import (
+    on_canvas_click,
+    on_canvas_drag,
+    on_mouse_wheel,
+    on_toolbar_button_release,
+    toggle_mode,
+    update_tool_button_styles,
+)
 
 def setup_interface(app):
     app.root.title("Thuật toán Welch-Powell")
@@ -31,7 +38,7 @@ def setup_interface(app):
         height=2
     )
     app.node_btn.pack(pady=10)
-    app.node_btn.bind("<ButtonRelease-1>", app.on_toolbar_button_release)
+    app.node_btn.bind("<ButtonRelease-1>", lambda event: on_toolbar_button_release(app, event))
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=10)
 
@@ -43,7 +50,6 @@ def setup_interface(app):
         fg="white"
     ).pack(pady=5)
 
-    # Keep move mode as default, but do not expose it in the toolbar.
     app.mode_var = tk.StringVar(value="move")
     app.tool_checks = {}
     app.tool_vars = {}
@@ -62,7 +68,7 @@ def setup_interface(app):
             selectcolor="#34495e",
             cursor="hand2",
             anchor="w",
-            command=lambda m=mode: app.toggle_mode(m)
+            command=lambda m=mode: toggle_mode(app, m)
         )
         check.pack(anchor="w", padx=10, pady=4, fill="x")
         app.tool_checks[mode] = check
@@ -72,7 +78,7 @@ def setup_interface(app):
     add_tool_check("Nối nút", "connect")
     add_tool_check("Xóa cạnh", "delete_edge")
 
-    app.update_tool_button_styles()
+    update_tool_button_styles(app)
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=20, expand=True)
 
@@ -92,53 +98,20 @@ def setup_interface(app):
     canvas_frame = tk.Frame(main_frame)
     canvas_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-    h_scroll = tk.Scrollbar(
-        canvas_frame,
-        orient="horizontal",
-        width=18,
-        troughcolor="#e6e6e6",
-        bg="#bdbdbd",
-        activebackground="#9b9b9b"
-    )
-    v_scroll = tk.Scrollbar(
-        canvas_frame,
-        orient="vertical",
-        width=18,
-        troughcolor="#e6e6e6",
-        bg="#bdbdbd",
-        activebackground="#9b9b9b"
-    )
-
     app.canvas = tk.Canvas(
         canvas_frame,
         bg="lightblue",
-        cursor="arrow",
-        xscrollcommand=h_scroll.set,
-        yscrollcommand=v_scroll.set
+        cursor="arrow"
     )
 
-    h_scroll.config(command=app.canvas.xview)
-    v_scroll.config(command=app.canvas.yview)
-
-    app.h_scroll = h_scroll
-    app.v_scroll = v_scroll
-
-    v_scroll.pack(side="right", fill="y")
-    h_scroll.pack(side="bottom", fill="x")
     app.canvas.pack(fill="both", expand=True)
 
-    app.canvas.bind("<Button-1>", app.on_canvas_click)
-    app.canvas.bind("<B1-Motion>", app.on_canvas_drag)
+    app.canvas.bind("<Button-1>", lambda event: on_canvas_click(app, event))
+    app.canvas.bind("<B1-Motion>", lambda event: on_canvas_drag(app, event))
     
-    # Zoom bằng scroll wheel
-    app.canvas.bind("<MouseWheel>", app.on_mouse_wheel)  # Windows
-    app.canvas.bind("<Button-4>", app.on_mouse_wheel)     # Linux scroll up
-    app.canvas.bind("<Button-5>", app.on_mouse_wheel)     # Linux scroll down
-    
-    # Pan bằng Shift + Left Click + Drag
-    app.canvas.bind("<Shift-Button-1>", app.on_pan_start)
-    app.canvas.bind("<Shift-B1-Motion>", app.on_canvas_drag)
-    
-    # Reset zoom và pan
+    app.canvas.bind("<MouseWheel>", lambda event: on_mouse_wheel(app, event))
+    app.canvas.bind("<Button-4>", lambda event: on_mouse_wheel(app, event))
+    app.canvas.bind("<Button-5>", lambda event: on_mouse_wheel(app, event))
+
     app.canvas.bind("<Control-0>", app.reset_zoom)
     app.root.bind("<Control-0>", app.reset_zoom)

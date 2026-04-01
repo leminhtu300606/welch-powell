@@ -1,8 +1,5 @@
-
 from typing import List, Dict
-
 def welsh_powell_coloring(nodes: List[Dict], edges: List[Dict]) -> List[int]:
-    """Tính chỉ số màu của từng nút theo thuật toán Welsh-Powell."""
     if not nodes:
         return []
 
@@ -29,11 +26,8 @@ def welsh_powell_coloring(nodes: List[Dict], edges: List[Dict]) -> List[int]:
                 neighbor_color = assigned_colors[neighbor_index]
                 if neighbor_color != -1:
                     used_neighbor_colors.add(neighbor_color)
-
         color_to_assign = 0
         while color_to_assign in used_neighbor_colors:
             color_to_assign += 1
-
         assigned_colors[node_index] = color_to_assign
-
     return assigned_colors

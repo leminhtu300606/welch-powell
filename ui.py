@@ -31,8 +31,6 @@ def setup_interface(app):
         height=2
     )
     app.node_btn.pack(pady=10)
-    app.node_btn.bind("<Button-1>", app.on_toolbar_button_press)
-    app.node_btn.bind("<B1-Motion>", app.on_toolbar_button_drag)
     app.node_btn.bind("<ButtonRelease-1>", app.on_toolbar_button_release)
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=10)
@@ -87,7 +85,7 @@ def setup_interface(app):
         cursor="hand2",
         width=12,
         height=2,
-        command=app.on_apply_algorithm
+        command=app.welsh_powell_coloring
     )
     app.run_btn.pack(pady=10)
 

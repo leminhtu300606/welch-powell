@@ -194,13 +194,6 @@ class WelshPowellApp:
             self.drag_start = (event.x, event.y)
             self.redraw_edges()
 
-    def on_apply_algorithm(self, event=None):
-        """Khởi động thuật toán tô màu"""
-        if not self.nodes:
-            messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
-            return
-        self.welsh_powell_coloring()
-
     def on_canvas_click(self, event):
         """Xử lý khi click trên canvas"""
         self.selected_node = self.get_node_at(event.x, event.y)
@@ -268,7 +261,6 @@ class WelshPowellApp:
         # Vẽ lại các cạnh
         self.redraw_edges()
         
-        # messagebox.showinfo("Đã xóa", f"Nút {node['label']} đã bị xóa!")
     
     def connect_nodes(self, node1, node2):
         """Liên kết hai nút"""
@@ -301,27 +293,6 @@ class WelshPowellApp:
             self.canvas.delete(edge["line"])
         self.edges.remove(edge)
         self.redraw_edges()
-    
-    def on_toolbar_button_press(self, event):
-        """Xử lý khi bấm nút 'Nút Mới' trong toolbar"""
-        self.dragging_from_toolbar = True
-        self.toolbar_dragged = False
-
-    def on_toolbar_button_click(self):
-        """Xử lý click bình thường trên nút 'Nút Mới'"""
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        x = canvas_width // 2
-        y = canvas_height // 2
-        new_node_count = len(self.nodes)
-        label = str(new_node_count + 1)
-        self.create_node(x, y, label, "white")
-
-    def on_toolbar_button_drag(self, event):
-        """Xử lý khi kéo nút 'Nút Mới' từ toolbar"""
-        if self.dragging_from_toolbar:
-            self.toolbar_dragged = True
-            self.root.config(cursor="hand2")
 
     def on_toolbar_button_release(self, event):
         """Xử lý khi thả nút từ toolbar"""
@@ -347,8 +318,8 @@ class WelshPowellApp:
         else:
             return
 
-        new_node_count = len(self.nodes)
-        label = str(new_node_count + 1)
+        max_label = max([int(node["label"]) for node in self.nodes], default=0)
+        label = str(max_label + 1)
         self.create_node(x, y, label, "white")
 
     def welsh_powell_coloring(self):

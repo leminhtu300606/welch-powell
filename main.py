@@ -5,14 +5,7 @@ from app_methods import AppMethods
 class WelshPowellApp(AppMethods):
     def __init__(self, root):
         self.root = root
-        self.nodes = []
-        self.selected_node = None
-        self.drag_start = None
-
-        self.edges = []
-        self.first_node_for_connection = None
-
-        self.scale = 1.0
+        self.init_state()
 
         setup_interface(self)
 

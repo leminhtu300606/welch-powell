@@ -1,4 +1,12 @@
 class AppMethods:
+    def init_state(self):
+        self.nodes = []
+        self.selected_node = None
+        self.drag_start = None
+        self.edges = []
+        self.first_node_for_connection = None
+        self.scale = 1.0
+
     def _clear_connection_highlight(self):
         """Xóa highlight khỏi nút được chọn để kết nối."""
         if self.first_node_for_connection is not None:

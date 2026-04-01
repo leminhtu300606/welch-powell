@@ -4,6 +4,7 @@ Chứa tất cả các hàm xử lý các thao tác của người dùng: click,
 """
 
 from tkinter import messagebox
+from graph_actions import connect_nodes, delete_edge, delete_node
 
 
 def zoom_in(app, factor=1.2):
@@ -57,7 +58,7 @@ def on_canvas_click(app, event):
     mode = app.mode_var.get()
 
     if mode == "delete" and app.selected_node:
-        app.delete_node(app.selected_node)
+        delete_node(app, app.selected_node)
     elif mode == "connect" and app.selected_node:
         if app.first_node_for_connection is None:
             app.first_node_for_connection = app.selected_node
@@ -65,12 +66,12 @@ def on_canvas_click(app, event):
         elif app.selected_node == app.first_node_for_connection:
             app._clear_connection_highlight()
         else:
-            app.connect_nodes(app.first_node_for_connection, app.selected_node)
+            connect_nodes(app, app.first_node_for_connection, app.selected_node)
             app._clear_connection_highlight()
     elif mode == "delete_edge":
         edge = app.get_edge_at(event.x, event.y)
         if edge:
-            app.delete_edge(edge)
+            delete_edge(app, edge)
         else:
             messagebox.showwarning("Thông báo", "Không có cạnh nào tại vị trí này!")
     elif app.selected_node:

@@ -7,6 +7,7 @@ from events import (
     toggle_mode,
     update_tool_button_styles,
 )
+from graph_actions import apply_welsh_powell_coloring
 
 def setup_interface(app):
     app.root.title("Thuật toán Welch-Powell")
@@ -50,6 +51,7 @@ def setup_interface(app):
         fg="white"
     ).pack(pady=5)
 
+    # Keep move mode as default, but do not expose it in the toolbar.
     app.mode_var = tk.StringVar(value="move")
     app.tool_checks = {}
     app.tool_vars = {}
@@ -91,7 +93,7 @@ def setup_interface(app):
         cursor="hand2",
         width=12,
         height=2,
-        command=app.welsh_powell_coloring
+        command=lambda: apply_welsh_powell_coloring(app)
     )
     app.run_btn.pack(pady=10)
 
@@ -109,9 +111,11 @@ def setup_interface(app):
     app.canvas.bind("<Button-1>", lambda event: on_canvas_click(app, event))
     app.canvas.bind("<B1-Motion>", lambda event: on_canvas_drag(app, event))
     
-    app.canvas.bind("<MouseWheel>", lambda event: on_mouse_wheel(app, event))
-    app.canvas.bind("<Button-4>", lambda event: on_mouse_wheel(app, event))
-    app.canvas.bind("<Button-5>", lambda event: on_mouse_wheel(app, event))
+    # Zoom bằng scroll wheel
+    app.canvas.bind("<MouseWheel>", lambda event: on_mouse_wheel(app, event))  # Windows
+    app.canvas.bind("<Button-4>", lambda event: on_mouse_wheel(app, event))     # Linux scroll up
+    app.canvas.bind("<Button-5>", lambda event: on_mouse_wheel(app, event))     # Linux scroll down
 
+    # Reset zoom
     app.canvas.bind("<Control-0>", app.reset_zoom)
     app.root.bind("<Control-0>", app.reset_zoom)

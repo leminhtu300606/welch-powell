@@ -14,9 +14,9 @@ def delete_node(app, node):
 
         if edge.get("line"):
             app.canvas.delete(edge["line"])
-        other_node_id = edge["node2_id"] if edge["node1_id"] == node_id else edge["node1_id"]
-        if 0 <= other_node_id < len(app.nodes):
-            app.nodes[other_node_id]["degree"] -= 1
+        other = edge["node2_id"] if edge["node1_id"] == node_id else edge["node1_id"]
+        if 0 <= other < len(app.nodes):
+            app.nodes[other]["degree"] -= 1
 
     app.edges = kept_edges
     app.nodes.remove(node)
@@ -31,11 +31,7 @@ def delete_node(app, node):
 
 
 def _edge_exists(app, node1_id, node2_id):
-    return any(
-        (e["node1_id"] == node1_id and e["node2_id"] == node2_id)
-        or (e["node1_id"] == node2_id and e["node2_id"] == node1_id)
-        for e in app.edges
-    )
+    return any({e["node1_id"], e["node2_id"]} == {node1_id, node2_id} for e in app.edges)
 
 
 def connect_nodes(app, node1, node2):

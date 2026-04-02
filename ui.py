@@ -21,8 +21,7 @@ def update_tool_button_styles(app):
 
 
 def toggle_mode(app, mode):
-    current_mode = app.mode_var.get()
-    mode_is_checked = app.tool_vars[mode].get()
+    current_mode, mode_is_checked = app.mode_var.get(), app.tool_vars[mode].get()
 
     if mode_is_checked:
         app.mode_var.set(mode)
@@ -44,19 +43,22 @@ def run_coloring(app):
         return
 
     max_color, color_groups = result
-    text = "\n".join([
-        "Kết quả Welch-Powell:",
-        "",
-        f"Số màu cần thiết: {max_color + 1}",
-        "",
-        "Phân bổ màu:",
-        *(f"Màu {idx}: {', '.join(nodes)}" for idx, nodes in enumerate(color_groups)),
-    ])
+    text = "\n".join(
+        [
+            "Kết quả Welch-Powell:",
+            "",
+            f"Số màu cần thiết: {max_color + 1}",
+            "",
+            "Phân bổ màu:",
+            *(f"Màu {idx}: {', '.join(nodes)}" for idx, nodes in enumerate(color_groups)),
+        ]
+    )
 
     result_window = tk.Toplevel(app.root)
     result_window.title("Kết quả Tô Màu")
     result_window.geometry("400x300")
     tk.Label(result_window, text=text, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
+
 
 def setup_interface(app):
     app.root.title("Ứng dụng mô phỏng thuật toán Welch-Powell")
@@ -69,13 +71,7 @@ def setup_interface(app):
     app.toolbar.pack(side="left", fill="y", padx=5, pady=5)
     app.toolbar.pack_propagate(False)
 
-    tk.Label(
-        app.toolbar,
-        text="Công Cụ",
-        font=("Arial", 11, "bold"),
-        bg="#2c3e50",
-        fg="white"
-    ).pack(pady=10)
+    tk.Label(app.toolbar, text="Công Cụ", font=("Arial", 11, "bold"), bg="#2c3e50", fg="white").pack(pady=10)
 
     app.node_btn = tk.Button(
         app.toolbar,
@@ -85,20 +81,14 @@ def setup_interface(app):
         fg="white",
         cursor="hand2",
         width=12,
-        height=2
+        height=2,
     )
     app.node_btn.pack(pady=10)
     app.node_btn.bind("<ButtonRelease-1>", lambda event: on_toolbar_button_release(app, event))
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=10)
 
-    tk.Label(
-        app.toolbar,
-        text="Tác vụ:",
-        font=("Arial", 10, "bold"),
-        bg="#2c3e50",
-        fg="white"
-    ).pack(pady=5)
+    tk.Label(app.toolbar, text="Tác vụ:", font=("Arial", 10, "bold"), bg="#2c3e50", fg="white").pack(pady=5)
 
     # Keep move mode as default, but do not expose it in the toolbar.
     app.mode_var = tk.StringVar(value="move")
@@ -119,7 +109,7 @@ def setup_interface(app):
             selectcolor="#34495e",
             cursor="hand2",
             anchor="w",
-            command=lambda m=mode: toggle_mode(app, m)
+            command=lambda m=mode: toggle_mode(app, m),
         )
         check.pack(anchor="w", padx=10, pady=4, fill="x")
         app.tool_checks[mode] = check
@@ -142,19 +132,14 @@ def setup_interface(app):
         cursor="hand2",
         width=12,
         height=2,
-        command=lambda app=app: run_coloring(app)
+        command=lambda app=app: run_coloring(app),
     )
     app.run_btn.pack(pady=10)
 
     canvas_frame = tk.Frame(main_frame)
     canvas_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-    app.canvas = tk.Canvas(
-        canvas_frame,
-        bg="lightblue",
-        cursor="arrow"
-    )
-
+    app.canvas = tk.Canvas(canvas_frame, bg="lightblue", cursor="arrow")
     app.canvas.pack(fill="both", expand=True)
 
     app.canvas.bind("<Button-1>", lambda event: on_canvas_click(app, event))

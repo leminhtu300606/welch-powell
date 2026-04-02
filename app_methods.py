@@ -1,10 +1,7 @@
 class AppMethods:
     def init_state(self):
-        self.nodes = []
-        self.selected_node = None
-        self.drag_start = None
-        self.edges = []
-        self.first_node_for_connection = None
+        self.nodes, self.edges = [], []
+        self.selected_node = self.drag_start = self.first_node_for_connection = None
         self.scale = 1.0
 
     def _clear_connection_highlight(self):
@@ -25,17 +22,11 @@ class AppMethods:
 
     def _generate_color(self, index):
         """Tạo màu từ HSL color space - không giới hạn số lượng màu."""
-        hue = (index * 137.5) % 360
-        saturation = 70 + (index % 2) * 20
-        lightness = 50 + (index % 3) * 5
-
-        return self._hsl_to_hex(hue, saturation, lightness)
+        return self._hsl_to_hex((index * 137.5) % 360, 70 + (index % 2) * 20, 50 + (index % 3) * 5)
 
     def _hsl_to_hex(self, h, s, l):
         """Convert HSL color to HEX format."""
-        s = s / 100
-        l = l / 100
-
+        s, l = s / 100, l / 100
         c = (1 - abs(2 * l - 1)) * s
         x = c * (1 - abs((h / 60) % 2 - 1))
         m = l - c / 2
@@ -53,10 +44,7 @@ class AppMethods:
         else:
             r, g, b = c, 0, x
 
-        r = int((r + m) * 255)
-        g = int((g + m) * 255)
-        b = int((b + m) * 255)
-
+        r, g, b = int((r + m) * 255), int((g + m) * 255), int((b + m) * 255)
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def _world_to_canvas(self, wx, wy):

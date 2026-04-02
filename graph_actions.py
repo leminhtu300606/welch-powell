@@ -1,23 +1,24 @@
-import tkinter as tk
-from tkinter import messagebox
 from welsh_powell import welsh_powell_coloring
 
 
 def delete_node(app, node):
+    node_id = node["id"]
     app.canvas.delete(node["circle"])
     app.canvas.delete(node["text"])
 
-    edges_to_remove = [
-        e for e in app.edges if e["node1_id"] == node["id"] or e["node2_id"] == node["id"]
-    ]
-    for edge in edges_to_remove:
+    kept_edges = []
+    for edge in app.edges:
+        if edge["node1_id"] != node_id and edge["node2_id"] != node_id:
+            kept_edges.append(edge)
+            continue
+
         if edge.get("line"):
             app.canvas.delete(edge["line"])
-        other_node_id = edge["node2_id"] if edge["node1_id"] == node["id"] else edge["node1_id"]
+        other_node_id = edge["node2_id"] if edge["node1_id"] == node_id else edge["node1_id"]
         if 0 <= other_node_id < len(app.nodes):
             app.nodes[other_node_id]["degree"] -= 1
 
-    app.edges = [e for e in app.edges if e not in edges_to_remove]
+    app.edges = kept_edges
     app.nodes.remove(node)
 
     if app.selected_node == node:
@@ -38,15 +39,17 @@ def _edge_exists(app, node1_id, node2_id):
 
 
 def connect_nodes(app, node1, node2):
-    if node1["id"] == node2["id"]:
-        messagebox.showwarning("Lỗi", "Không thể liên kết nút với chính nó!")
-    elif _edge_exists(app, node1["id"], node2["id"]):
-        messagebox.showwarning("Lỗi", "Cạnh này đã tồn tại!")
-    else:
-        app.edges.append({"node1_id": node1["id"], "node2_id": node2["id"], "line": None})
-        node1["degree"] += 1
-        node2["degree"] += 1
-        app.redraw_edges()
+    node1_id, node2_id = node1["id"], node2["id"]
+    if node1_id == node2_id:
+        return False, "Không thể liên kết nút với chính nó!"
+    if _edge_exists(app, node1_id, node2_id):
+        return False, "Cạnh này đã tồn tại!"
+
+    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None})
+    node1["degree"] += 1
+    node2["degree"] += 1
+    app.redraw_edges()
+    return True, None
 
 
 def delete_edge(app, edge):
@@ -64,22 +67,14 @@ def delete_edge(app, edge):
 def apply_welsh_powell_coloring(app):
     node_colors = welsh_powell_coloring(app.nodes, app.edges)
     if not node_colors:
-        messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
-        return
+        return None
 
     max_color = max(node_colors)
     color_groups = [[] for _ in range(max_color + 1)]
 
-    for i, color_idx in enumerate(node_colors):
-        app.nodes[i]["color"] = app._generate_color(color_idx)
-        app.canvas.itemconfig(app.nodes[i]["circle"], fill=app.nodes[i]["color"])
-        color_groups[color_idx].append(app.nodes[i]["label"])
+    for node, color_idx in zip(app.nodes, node_colors):
+        node["color"] = app._generate_color(color_idx)
+        app.canvas.itemconfig(node["circle"], fill=node["color"])
+        color_groups[color_idx].append(node["label"])
 
-    result = f"Kết quả Welch-Powell:\n\nSố màu cần thiết: {max_color + 1}\n\nPhân bổ màu:\n"
-    for color_idx, nodes_in_color in enumerate(color_groups):
-        result += f"Màu {color_idx}: {', '.join(nodes_in_color)}\n"
-
-    result_window = tk.Toplevel(app.root)
-    result_window.title("Kết quả Tô Màu")
-    result_window.geometry("400x300")
-    tk.Label(result_window, text=result, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
+    return max_color, color_groups

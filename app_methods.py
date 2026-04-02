@@ -13,6 +13,16 @@ class AppMethods:
             self.canvas.itemconfig(self.first_node_for_connection["circle"], width=2, outline="black")
             self.first_node_for_connection = None
 
+    def zoom_in(self, factor=1.2):
+        self._apply_zoom(factor)
+
+    def zoom_out(self, factor=1.2):
+        self._apply_zoom(1 / factor)
+
+    def _apply_zoom(self, factor):
+        self.scale = max(0.1, self.scale * factor)
+        self.redraw_edges()
+
     def _generate_color(self, index):
         """Tạo màu từ HSL color space - không giới hạn số lượng màu."""
         hue = (index * 137.5) % 360
@@ -51,15 +61,11 @@ class AppMethods:
 
     def _world_to_canvas(self, wx, wy):
         """Chuyển đổi từ tọa độ thế giới sang tọa độ canvas."""
-        cx = wx * self.scale
-        cy = wy * self.scale
-        return cx, cy
+        return wx * self.scale, wy * self.scale
 
     def _canvas_to_world(self, cx, cy):
         """Chuyển đổi từ tọa độ canvas sang tọa độ thế giới."""
-        wx = cx / self.scale
-        wy = cy / self.scale
-        return wx, wy
+        return cx / self.scale, cy / self.scale
 
     def _reindex_nodes(self):
         """Giữ id nút khớp với vị trí trong danh sách để tránh lệch tham chiếu cạnh."""

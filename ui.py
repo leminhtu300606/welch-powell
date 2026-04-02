@@ -1,16 +1,65 @@
 import tkinter as tk
+from tkinter import messagebox
 from events import (
     on_canvas_click,
     on_canvas_drag,
     on_mouse_wheel,
     on_toolbar_button_release,
-    toggle_mode,
-    update_tool_button_styles,
 )
 from graph_actions import apply_welsh_powell_coloring
 
+
+def update_tool_button_styles(app):
+    active_mode = app.mode_var.get()
+    for mode, check in app.tool_checks.items():
+        is_active = active_mode == mode
+        app.tool_vars[mode].set(is_active)
+        check.config(
+            bg="#1f618d" if is_active else "#2c3e50",
+            selectcolor="#1f618d" if is_active else "#34495e",
+        )
+
+
+def toggle_mode(app, mode):
+    current_mode = app.mode_var.get()
+    mode_is_checked = app.tool_vars[mode].get()
+
+    if mode_is_checked:
+        app.mode_var.set(mode)
+        for other_mode, var in app.tool_vars.items():
+            var.set(other_mode == mode)
+    elif current_mode == mode:
+        app.mode_var.set("move")
+
+    if app.mode_var.get() != "connect":
+        app._clear_connection_highlight()
+
+    update_tool_button_styles(app)
+
+
+def run_coloring(app):
+    result = apply_welsh_powell_coloring(app)
+    if result is None:
+        messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
+        return
+
+    max_color, color_groups = result
+    text = "\n".join([
+        "Kết quả Welch-Powell:",
+        "",
+        f"Số màu cần thiết: {max_color + 1}",
+        "",
+        "Phân bổ màu:",
+        *(f"Màu {idx}: {', '.join(nodes)}" for idx, nodes in enumerate(color_groups)),
+    ])
+
+    result_window = tk.Toplevel(app.root)
+    result_window.title("Kết quả Tô Màu")
+    result_window.geometry("400x300")
+    tk.Label(result_window, text=text, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
+
 def setup_interface(app):
-    app.root.title("Thuật toán Welch-Powell")
+    app.root.title("Ứng dụng mô phỏng thuật toán Welch-Powell")
     app.root.geometry("1100x700")
 
     main_frame = tk.Frame(app.root)
@@ -93,7 +142,7 @@ def setup_interface(app):
         cursor="hand2",
         width=12,
         height=2,
-        command=lambda: apply_welsh_powell_coloring(app)
+        command=lambda app=app: run_coloring(app)
     )
     app.run_btn.pack(pady=10)
 

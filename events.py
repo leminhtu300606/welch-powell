@@ -51,7 +51,7 @@ def on_canvas_drag(app, event):
         app.selected_node["x"] += (event.x - app.drag_start[0]) / app.scale
         app.selected_node["y"] += (event.y - app.drag_start[1]) / app.scale
         app.drag_start = (event.x, event.y)
-        app.redraw_edges()
+        app.render_graph()
 
 
 def on_mouse_wheel(app, event):

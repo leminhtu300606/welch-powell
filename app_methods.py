@@ -18,34 +18,7 @@ class AppMethods:
 
     def _apply_zoom(self, factor):
         self.scale = max(0.1, self.scale * factor)
-        self.redraw_edges()
-
-    def _generate_color(self, index):
-        """Tạo màu từ HSL color space - không giới hạn số lượng màu."""
-        return self._hsl_to_hex((index * 137.5) % 360, 70 + (index % 2) * 20, 50 + (index % 3) * 5)
-
-    def _hsl_to_hex(self, h, s, l):
-        """Convert HSL color to HEX format."""
-        s, l = s / 100, l / 100
-        c = (1 - abs(2 * l - 1)) * s
-        x = c * (1 - abs((h / 60) % 2 - 1))
-        m = l - c / 2
-
-        if h < 60:
-            r, g, b = c, x, 0
-        elif h < 120:
-            r, g, b = x, c, 0
-        elif h < 180:
-            r, g, b = 0, c, x
-        elif h < 240:
-            r, g, b = 0, x, c
-        elif h < 300:
-            r, g, b = x, 0, c
-        else:
-            r, g, b = c, 0, x
-
-        r, g, b = int((r + m) * 255), int((g + m) * 255), int((b + m) * 255)
-        return f"#{r:02x}{g:02x}{b:02x}"
+        self.render_graph()
 
     def _world_to_canvas(self, wx, wy):
         """Chuyển đổi từ tọa độ thế giới sang tọa độ canvas."""
@@ -54,18 +27,6 @@ class AppMethods:
     def _canvas_to_world(self, cx, cy):
         """Chuyển đổi từ tọa độ canvas sang tọa độ thế giới."""
         return cx / self.scale, cy / self.scale
-
-    def _reindex_nodes(self):
-        """Giữ id nút khớp với vị trí trong danh sách để tránh lệch tham chiếu cạnh."""
-        old_to_new_id = {node["id"]: i for i, node in enumerate(self.nodes)}
-
-        for i, node in enumerate(self.nodes):
-            node["id"] = i
-
-        self.edges = [
-            {**e, "node1_id": old_to_new_id[e["node1_id"]], "node2_id": old_to_new_id[e["node2_id"]]}
-            for e in self.edges if e["node1_id"] in old_to_new_id and e["node2_id"] in old_to_new_id
-        ]
 
     def create_node(self, x, y, label, color):
         """Tạo một nút hình tròn"""
@@ -114,8 +75,8 @@ class AppMethods:
             None,
         )
 
-    def redraw_edges(self):
-        """Vẽ lại tất cả các cạnh hiện có"""
+    def render_graph(self):
+        """Vẽ lại toàn bộ đồ thị (cạnh và nút)"""
         self.canvas.delete("all")
 
         for edge in self.edges:

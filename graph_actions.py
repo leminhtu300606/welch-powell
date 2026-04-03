@@ -107,10 +107,22 @@ def apply_welsh_powell_coloring(app):
 
     max_color = max(node_colors)
     color_groups = [[] for _ in range(max_color + 1)]
+    coloring_plan = []
+    indexed_nodes = sorted(
+        enumerate(app.nodes),
+        key=lambda pair: pair[1]["degree"],
+        reverse=True,
+    )
+    ordered_by_color_then_degree = sorted(
+        indexed_nodes,
+        key=lambda pair: (node_colors[pair[0]], -pair[1]["degree"], pair[0]),
+    )
 
-    for node, color_idx in zip(app.nodes, node_colors):
-        node["color"] = _generate_color(color_idx)
-        app.canvas.itemconfig(node["circle"], fill=node["color"])
+    for node_index, node in ordered_by_color_then_degree:
+        color_idx = node_colors[node_index]
+        color_value = _generate_color(color_idx)
+        node["color"] = color_value
+        coloring_plan.append((node, color_value))
         color_groups[color_idx].append(node["label"])
 
-    return max_color, color_groups
+    return max_color, color_groups, coloring_plan

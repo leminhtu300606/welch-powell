@@ -1,33 +1,52 @@
-from typing import List, Dict
+from typing import Dict, List
+
+
 def welsh_powell_coloring(nodes: List[Dict], edges: List[Dict]) -> List[int]:
-    if not nodes:
+    """Color graph vertices with Welsh-Powell heuristic.
+
+    Returns a color index list aligned with the input ``nodes`` order.
+    """
+    node_count = len(nodes)
+    if node_count == 0:
         return []
 
-    indexed_nodes = sorted(
-        enumerate(nodes),
-        key=lambda pair: pair[1]["degree"],
-        reverse=True
+    ordered_indices = sorted(
+        range(node_count),
+        key=lambda idx: nodes[idx].get("degree", 0),
+        reverse=True,
     )
 
-    assigned_colors = [-1] * len(nodes)
-    first_node_index = indexed_nodes[0][0]
-    assigned_colors[first_node_index] = 0
+    id_to_index = {
+        node.get("id", index): index
+        for index, node in enumerate(nodes)
+    }
+    adjacency = [set() for _ in range(node_count)]
 
-    for node_index, _node_data in indexed_nodes[1:]:
-        used_neighbor_colors = set()
-        for edge in edges:
-            if edge["node1_id"] == node_index:
-                neighbor_index = edge["node2_id"]
-                neighbor_color = assigned_colors[neighbor_index]
-                if neighbor_color != -1:
-                    used_neighbor_colors.add(neighbor_color)
-            elif edge["node2_id"] == node_index:
-                neighbor_index = edge["node1_id"]
-                neighbor_color = assigned_colors[neighbor_index]
-                if neighbor_color != -1:
-                    used_neighbor_colors.add(neighbor_color)
-        color_to_assign = 0
-        while color_to_assign in used_neighbor_colors:
-            color_to_assign += 1
-        assigned_colors[node_index] = color_to_assign
+    for edge in edges:
+        left = id_to_index.get(edge.get("node1_id"))
+        right = id_to_index.get(edge.get("node2_id"))
+        if left is None or right is None or left == right:
+            continue
+        adjacency[left].add(right)
+        adjacency[right].add(left)
+
+    assigned_colors = [-1] * node_count
+    uncolored_count = node_count
+    current_color = 0
+
+    while uncolored_count:
+        same_color_nodes = set()
+
+        for node_index in ordered_indices:
+            if assigned_colors[node_index] != -1:
+                continue
+            if adjacency[node_index] & same_color_nodes:
+                continue
+
+            assigned_colors[node_index] = current_color
+            same_color_nodes.add(node_index)
+            uncolored_count -= 1
+
+        current_color += 1
+
     return assigned_colors

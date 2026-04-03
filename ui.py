@@ -7,6 +7,14 @@ from events import (
     on_toolbar_button_release,
 )
 from graph_actions import apply_welsh_powell_coloring
+from file_manager import load_graph_from_file, save_graph_to_file
+
+
+ANIMATION_SPEED_LEVELS = [
+    ("Chậm", 700),
+    ("Vừa", 350),
+    ("Nhanh", 180),
+]
 
 
 def update_tool_button_styles(app):
@@ -36,28 +44,63 @@ def toggle_mode(app, mode):
     update_tool_button_styles(app)
 
 
+def cycle_animation_speed(app):
+    current_label = getattr(app, "animation_speed_label", "Vừa")
+    labels = [label for label, _delay in ANIMATION_SPEED_LEVELS]
+
+    if current_label in labels:
+        next_index = (labels.index(current_label) + 1) % len(labels)
+    else:
+        next_index = 1
+
+    next_label, next_delay = ANIMATION_SPEED_LEVELS[next_index]
+    app.animation_speed_label = next_label
+    app.animation_delay_ms = next_delay
+    app.speed_btn.config(text=f"Tốc độ: {next_label}")
+
+
 def run_coloring(app):
     result = apply_welsh_powell_coloring(app)
     if result is None:
         messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
         return
 
-    max_color, color_groups = result
-    text = "\n".join(
-        [
-            "Kết quả Welch-Powell:",
-            "",
-            f"Số màu cần thiết: {max_color + 1}",
-            "",
-            "Phân bổ màu:",
-            *(f"Màu {idx}: {', '.join(nodes)}" for idx, nodes in enumerate(color_groups)),
-        ]
-    )
+    max_color, color_groups, coloring_plan = result
+    delay_ms = getattr(app, "animation_delay_ms", 350)
+    app.run_btn.config(state="disabled")
 
-    result_window = tk.Toplevel(app.root)
-    result_window.title("Kết quả Tô Màu")
-    result_window.geometry("400x300")
-    tk.Label(result_window, text=text, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
+    def show_result_window():
+        text = "\n".join(
+            [
+                "Kết quả Welch-Powell:",
+                "",
+                f"Số màu cần thiết: {max_color + 1}",
+                "",
+                "Phân bổ màu:",
+                *(f"Màu {idx}: {', '.join(nodes)}" for idx, nodes in enumerate(color_groups)),
+            ]
+        )
+
+        result_window = tk.Toplevel(app.root)
+        result_window.title("Kết quả Tô Màu")
+        result_window.geometry("400x300")
+        tk.Label(result_window, text=text, justify="left", padx=10, pady=10, font=("Arial", 10)).pack()
+
+    def animate_step(index=0, previous_node=None):
+        if previous_node is not None:
+            app.canvas.itemconfig(previous_node["circle"], width=2, outline="black")
+
+        if index >= len(coloring_plan):
+            app.run_btn.config(state="normal")
+            show_result_window()
+            return
+
+        current_node, color_value = coloring_plan[index]
+        current_node["color"] = color_value
+        app.canvas.itemconfig(current_node["circle"], fill=color_value, width=4, outline="#e67e22")
+        app.root.after(delay_ms, lambda: animate_step(index + 1, current_node))
+
+    animate_step()
 
 
 def setup_interface(app):
@@ -123,6 +166,32 @@ def setup_interface(app):
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=20, expand=True)
 
+    app.open_btn = tk.Button(
+        app.toolbar,
+        text="📂 Mở",
+        font=("Arial", 10, "bold"),
+        bg="#9b59b6",
+        fg="white",
+        cursor="hand2",
+        width=12,
+        height=2,
+        command=lambda app=app: load_graph_from_file(app),
+    )
+    app.open_btn.pack(pady=6)
+
+    app.save_btn = tk.Button(
+        app.toolbar,
+        text="💾 Lưu",
+        font=("Arial", 10, "bold"),
+        bg="#e74c3c",
+        fg="white",
+        cursor="hand2",
+        width=12,
+        height=2,
+        command=lambda app=app: save_graph_to_file(app),
+    )
+    app.save_btn.pack(pady=6)
+
     app.run_btn = tk.Button(
         app.toolbar,
         text="> Chạy",
@@ -134,6 +203,21 @@ def setup_interface(app):
         height=2,
         command=lambda app=app: run_coloring(app),
     )
+
+    app.animation_speed_label = "Vừa"
+    app.animation_delay_ms = 350
+    app.speed_btn = tk.Button(
+        app.toolbar,
+        text="Tốc độ: Vừa",
+        font=("Arial", 9, "bold"),
+        bg="#f39c12",
+        fg="white",
+        cursor="hand2",
+        width=12,
+        command=lambda app=app: cycle_animation_speed(app),
+    )
+    app.speed_btn.pack(pady=6)
+
     app.run_btn.pack(pady=10)
 
     canvas_frame = tk.Frame(main_frame)

@@ -81,10 +81,14 @@ def connect_nodes(app, node1, node2):
     if _edge_exists(app, node1_id, node2_id):
         return False, "Cạnh này đã tồn tại!"
 
-    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None})
+    edge = {"node1_id": node1_id, "node2_id": node2_id, "line": None}
+    app.edges.append(edge)
     node1["degree"] += 1
     node2["degree"] += 1
-    app.render_graph()
+    if hasattr(app, "animate_edge_connection"):
+        app.animate_edge_connection(edge)
+    else:
+        app.render_graph()
     return True, None
 
 

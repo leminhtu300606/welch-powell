@@ -1,3 +1,6 @@
+import math
+
+
 class AppMethods:
     def init_state(self):
         self.nodes, self.edges = [], []
@@ -27,6 +30,99 @@ class AppMethods:
     def _canvas_to_world(self, cx, cy):
         """Chuyển đổi từ tọa độ canvas sang tọa độ thế giới."""
         return cx / self.scale, cy / self.scale
+
+    def _edge_control_point(self, n1, n2):
+        """Tính điểm điều khiển cho cạnh cong để giảm chồng lấn."""
+        x1, y1 = n1["x"], n1["y"]
+        x2, y2 = n2["x"], n2["y"]
+        dx, dy = x2 - x1, y2 - y1
+        distance = math.hypot(dx, dy)
+
+        if distance == 0:
+            return x1, y1
+
+        mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
+        perp_x, perp_y = -dy / distance, dx / distance
+
+        pair_key = (min(n1["id"], n2["id"]), max(n1["id"], n2["id"]))
+        direction = 1 if (pair_key[0] + pair_key[1]) % 2 == 0 else -1
+        offset = max(18, min(60, distance * 0.12)) * direction
+
+        return mid_x + perp_x * offset, mid_y + perp_y * offset
+
+    def _edge_curve_points(self, n1, n2, steps=24):
+        """Sinh các điểm xấp xỉ của đường cong để vẽ và phát hiện click."""
+        x1, y1 = n1["x"], n1["y"]
+        cx, cy = self._edge_control_point(n1, n2)
+        x2, y2 = n2["x"], n2["y"]
+
+        points = []
+        for i in range(steps + 1):
+            t = i / steps
+            mt = 1 - t
+            x = mt * mt * x1 + 2 * mt * t * cx + t * t * x2
+            y = mt * mt * y1 + 2 * mt * t * cy + t * t * y2
+            points.append((x, y))
+        return points
+
+    @staticmethod
+    def _distance_point_to_segment(px, py, x1, y1, x2, y2):
+        """Khoảng cách từ điểm đến đoạn thẳng."""
+        dx, dy = x2 - x1, y2 - y1
+        if dx == 0 and dy == 0:
+            return math.hypot(px - x1, py - y1)
+
+        t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
+        t = max(0.0, min(1.0, t))
+        closest_x = x1 + t * dx
+        closest_y = y1 + t * dy
+        return math.hypot(px - closest_x, py - closest_y)
+
+    def animate_edge_connection(self, edge, duration_ms=220, steps=12):
+        """Animate drawing of a newly connected edge."""
+        if not self.edges:
+            return
+
+        n1 = self.nodes[edge["node1_id"]]
+        n2 = self.nodes[edge["node2_id"]]
+        curve_points = self._edge_curve_points(n1, n2, steps=max(24, steps * 2))
+        canvas_points = []
+        for x, y in curve_points:
+            cx, cy = self._world_to_canvas(x, y)
+            canvas_points.extend([cx, cy])
+
+        if len(canvas_points) < 4:
+            return
+
+        line = self.canvas.create_line(
+            canvas_points[0],
+            canvas_points[1],
+            canvas_points[2],
+            canvas_points[3],
+            fill="gray",
+            width=2,
+            tags="edge",
+            smooth=True,
+            splinesteps=24,
+        )
+        edge["line"] = line
+
+        frame_delay = max(1, duration_ms // steps)
+
+        def step(i=2):
+            if line not in self.canvas.find_all():
+                return
+
+            coords = canvas_points[: i + 2]
+            if len(coords) >= 4:
+                self.canvas.coords(line, *coords)
+
+            if i < len(canvas_points) - 2:
+                self.root.after(frame_delay, lambda: step(i + 2))
+            else:
+                self.canvas.coords(line, *canvas_points)
+
+        step()
 
     def create_node(self, x, y, label, color):
         """Tạo một nút hình tròn"""
@@ -85,16 +181,18 @@ class AppMethods:
         for edge in self.edges:
             n1 = self.nodes[edge["node1_id"]]
             n2 = self.nodes[edge["node2_id"]]
-            cx1, cy1 = self._world_to_canvas(n1["x"], n1["y"])
-            cx2, cy2 = self._world_to_canvas(n2["x"], n2["y"])
+            curve_points = self._edge_curve_points(n1, n2)
+            canvas_points = []
+            for x, y in curve_points:
+                cx, cy = self._world_to_canvas(x, y)
+                canvas_points.extend([cx, cy])
             edge["line"] = self.canvas.create_line(
-                cx1,
-                cy1,
-                cx2,
-                cy2,
+                *canvas_points,
                 fill="gray",
                 width=2,
                 tags="edge",
+                smooth=True,
+                splinesteps=24,
             )
 
         for node in self.nodes:
@@ -128,25 +226,8 @@ class AppMethods:
 
             n1 = self.nodes[edge["node1_id"]]
             n2 = self.nodes[edge["node2_id"]]
-            x1, y1 = n1["x"], n1["y"]
-            x2, y2 = n2["x"], n2["y"]
-
-            tolerance_world = tolerance / self.scale
-            if not (
-                min(x1, x2) - tolerance_world <= wx <= max(x1, x2) + tolerance_world
-                and min(y1, y2) - tolerance_world <= wy <= max(y1, y2) + tolerance_world
-            ):
-                continue
-
-            dx, dy = x2 - x1, y2 - y1
-            dd = dx * dx + dy * dy
-            if dd == 0:
-                continue
-
-            t = max(0, min(1, ((wx - x1) * dx + (wy - y1) * dy) / dd))
-            closest_x, closest_y = x1 + t * dx, y1 + t * dy
-            dist_sq = (wx - closest_x) ** 2 + (wy - closest_y) ** 2
-
-            if dist_sq <= tol_sq:
-                return edge
+            curve_points = self._edge_curve_points(n1, n2, steps=20)
+            for start, end in zip(curve_points, curve_points[1:]):
+                if self._distance_point_to_segment(wx, wy, start[0], start[1], end[0], end[1]) ** 2 <= tol_sq:
+                    return edge
         return None

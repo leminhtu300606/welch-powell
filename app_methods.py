@@ -215,6 +215,9 @@ class AppMethods:
                 font=("Arial", 12, "bold"),
             )
 
+        if hasattr(self, "refresh_relationship_panel") and callable(self.refresh_relationship_panel):
+            self.refresh_relationship_panel()
+
     def get_edge_at(self, x, y, tolerance=5):
         """Tìm cạnh gần điểm click"""
         wx, wy = self._canvas_to_world(x, y)

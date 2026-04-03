@@ -60,6 +60,9 @@ def cycle_animation_speed(app):
 
 
 def run_coloring(app):
+    if hasattr(app, "refresh_relationship_panel"):
+        app.refresh_relationship_panel()
+
     result = apply_welsh_powell_coloring(app)
     if result is None:
         messagebox.showwarning("Lỗi", "Không có nút nào để tô màu!")
@@ -101,6 +104,22 @@ def run_coloring(app):
         app.root.after(delay_ms, lambda: animate_step(index + 1, current_node))
 
     animate_step()
+
+
+def _refresh_relationship_panel(app):
+    if not hasattr(app, "relation_listbox"):
+        return
+
+    app.relation_listbox.delete(0, tk.END)
+    app.relationship_edge_refs = []
+
+    for edge in app.edges:
+        if edge["node1_id"] >= len(app.nodes) or edge["node2_id"] >= len(app.nodes):
+            continue
+        node1 = app.nodes[edge["node1_id"]]
+        node2 = app.nodes[edge["node2_id"]]
+        app.relation_listbox.insert(tk.END, f"{node1['label']} {node2['label']}")
+        app.relationship_edge_refs.append(edge)
 
 
 def setup_interface(app):
@@ -220,6 +239,22 @@ def setup_interface(app):
 
     app.run_btn.pack(pady=10)
 
+    relation_frame = tk.Frame(main_frame, bg="#ecf0f1", width=260, relief="sunken", bd=2)
+    relation_frame.pack(side="right", fill="y", padx=5, pady=5)
+    relation_frame.pack_propagate(False)
+
+    tk.Label(
+        relation_frame,
+        text="Quan hệ giữa các nút",
+        font=("Arial", 11, "bold"),
+        bg="#ecf0f1",
+        fg="#2c3e50",
+    ).pack(pady=(10, 6))
+
+    app.relation_listbox = tk.Listbox(relation_frame, font=("Arial", 10), height=12)
+    app.relation_listbox.pack(fill="x", padx=10, pady=(0, 8))
+    app.relationship_edge_refs = []
+
     canvas_frame = tk.Frame(main_frame)
     canvas_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
@@ -233,4 +268,7 @@ def setup_interface(app):
     app.canvas.bind("<MouseWheel>", lambda event: on_mouse_wheel(app, event))  # Windows
     app.canvas.bind("<Button-4>", lambda event: on_mouse_wheel(app, event))     # Linux scroll up
     app.canvas.bind("<Button-5>", lambda event: on_mouse_wheel(app, event))     # Linux scroll down
+
+    app.refresh_relationship_panel = lambda: _refresh_relationship_panel(app)
+    app.refresh_relationship_panel()
 

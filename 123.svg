@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="434" height="392" viewBox="302 97 434 392">
+  <defs>
+    <style>
+      .node-label { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+      .edge { stroke: #2c3e50; stroke-width: 2; }
+      .node { stroke: #111; stroke-width: 2; }
+    </style>
+  </defs>
+  <metadata id="graph-data"><![CDATA[{"scale": 1.0, "nodes": [{"id": 0, "x": 661.0, "y": 414.0, "radius": 35, "label": "2", "color": "#d82626", "degree": 2}, {"id": 1, "x": 377.0, "y": 412.0, "radius": 35, "label": "3", "color": "#24f361", "degree": 2}, {"id": 2, "x": 381.0, "y": 191.0, "radius": 35, "label": "4", "color": "#d82626", "degree": 2}, {"id": 3, "x": 627.0, "y": 172.0, "radius": 35, "label": "5", "color": "#24f361", "degree": 2}], "edges": [{"node1_id": 2, "node2_id": 3}, {"node1_id": 3, "node2_id": 0}, {"node1_id": 1, "node2_id": 0}, {"node1_id": 1, "node2_id": 2}]}]]></metadata>
+  <rect x="-10000" y="-10000" width="20000" height="20000" fill="#d6ecff"/>
+  <g id="edges">
+    <line class="edge" x1="381.0" y1="191.0" x2="627.0" y2="172.0" />
+    <line class="edge" x1="627.0" y1="172.0" x2="661.0" y2="414.0" />
+    <line class="edge" x1="377.0" y1="412.0" x2="661.0" y2="414.0" />
+    <line class="edge" x1="377.0" y1="412.0" x2="381.0" y2="191.0" />
+  </g>
+  <g id="nodes">
+    <circle class="node" cx="661.0" cy="414.0" r="35" fill="#d82626" />
+    <text class="node-label" x="661.0" y="414.0">2</text>
+    <circle class="node" cx="377.0" cy="412.0" r="35" fill="#24f361" />
+    <text class="node-label" x="377.0" y="412.0">3</text>
+    <circle class="node" cx="381.0" cy="191.0" r="35" fill="#d82626" />
+    <text class="node-label" x="381.0" y="191.0">4</text>
+    <circle class="node" cx="627.0" cy="172.0" r="35" fill="#24f361" />
+    <text class="node-label" x="627.0" y="172.0">5</text>
+  </g>
+</svg>

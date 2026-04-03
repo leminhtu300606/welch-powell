@@ -154,6 +154,17 @@ def _apply_graph_data(app, graph_data):
 
 def save_graph_to_file(app, file_path=None):
     """Lưu trạng thái đồ thị ra file SVG có nhúng dữ liệu để tải lại."""
+    current_file_path = getattr(app, "current_file_path", None)
+
+    if file_path is None and current_file_path:
+        should_save = messagebox.askyesno(
+            "Xác nhận lưu",
+            f"File hiện tại đã được mở trước đó.\nBạn có muốn lưu thay đổi vào:\n{os.path.basename(current_file_path)} không?",
+        )
+        if not should_save:
+            return False
+        file_path = current_file_path
+
     if file_path is None:
         file_path = filedialog.asksaveasfilename(
             defaultextension=".svg",
@@ -171,6 +182,8 @@ def save_graph_to_file(app, file_path=None):
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(_graph_data_to_svg(graph_data))
+
+        app.current_file_path = file_path
 
         messagebox.showinfo("Thành công", f"Đã lưu đồ thị vào: {os.path.basename(file_path)}")
         return True
@@ -199,6 +212,7 @@ def load_graph_from_file(app, file_path=None):
         graph_data = _extract_graph_data_from_svg(file_path)
 
         _apply_graph_data(app, graph_data)
+        app.current_file_path = file_path
 
         messagebox.showinfo("Thành công", f"Đã tải đồ thị từ: {os.path.basename(file_path)}")
         return True

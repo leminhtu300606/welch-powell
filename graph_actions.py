@@ -85,10 +85,7 @@ def connect_nodes(app, node1, node2):
     app.edges.append(edge)
     node1["degree"] += 1
     node2["degree"] += 1
-    if hasattr(app, "animate_edge_connection"):
-        app.animate_edge_connection(edge)
-    else:
-        app.render_graph()
+    app.render_graph()
     return True, None
 
 

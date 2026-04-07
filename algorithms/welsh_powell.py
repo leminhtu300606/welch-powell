@@ -1,7 +1,5 @@
-"""welsh_powell.py - Cài đặt thuật toán Welsh-Powell cho tô màu đỉnh đồ thị."""
-
+"""algorithms/welsh_powell.py - Cài đặt thuật toán Welsh-Powell cho tô màu đỉnh đồ thị."""
 from typing import Dict, List
-
 
 def welsh_powell_coloring(nodes: List[Dict], edges: List[Dict]) -> List[int]:
     """Color graph vertices with Welsh-Powell heuristic.

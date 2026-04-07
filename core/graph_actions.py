@@ -1,6 +1,6 @@
 """graph_actions.py - Các thao tác nghiệp vụ trên nút/cạnh và tô màu đồ thị."""
 
-from welsh_powell import welsh_powell_coloring
+from algorithms.welsh_powell import welsh_powell_coloring
 
 
 def _reindex_nodes(app):
@@ -85,14 +85,14 @@ def _edge_exists(app, node1_id, node2_id):
     return False
 
 
-def connect_nodes(app, node1, node2):
+def connect_nodes(app, node1, node2, weight=1): # Thêm tham số weight
     node1_id, node2_id = node1["id"], node2["id"]
     if node1_id == node2_id:
         return False, "Không thể liên kết nút với chính nó!"
     if _edge_exists(app, node1_id, node2_id):
         return False, "Cạnh này đã tồn tại!"
 
-    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None})
+    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None, "weight": weight})
     node1["degree"] += 1
     node2["degree"] += 1
     app.render_graph()
@@ -130,3 +130,13 @@ def apply_welsh_powell_coloring(app):
         color_groups[color_idx].append(node["label"])
 
     return max_color, color_groups, coloring_plan
+from algorithms.dijkstra import dijkstra
+
+def run_dijkstra_algorithm(app, start_node, end_node):
+    """Thực thi và trả về danh sách các nút thuộc đường đi ngắn nhất."""
+    path_indices = dijkstra(app.nodes, app.edges, start_node["id"], end_node["id"])
+    if not path_indices:
+        return None
+    
+    # Chuyển đổi chỉ số thành đối tượng node thực tế
+    return [app.nodes[idx] for idx in path_indices]

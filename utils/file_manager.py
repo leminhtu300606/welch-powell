@@ -1,6 +1,6 @@
 """
 file_manager.py - Xử lý lưu và tải file
-Cho phép người dùng lưu và tải trạng thái đồ thị từ file
+Cho phép người dùng lưu và tải trạng thái đồ thị từ file, bao gồm cả trọng số (weight).
 """
 
 import html
@@ -36,6 +36,7 @@ def _collect_graph_data(app):
             {
                 "node1_id": edge["node1_id"],
                 "node2_id": edge["node2_id"],
+                "weight": edge.get("weight", 1), # THÊM LƯU TRỌNG SỐ Ở ĐÂY
             }
         )
 
@@ -155,6 +156,7 @@ def _apply_graph_data(app, graph_data):
             edge = {
                 "node1_id": edge_data["node1_id"],
                 "node2_id": edge_data["node2_id"],
+                "weight": edge_data.get("weight", 1), # TẢI TRỌNG SỐ TỪ FILE VÀO ĐÂY
                 "line": None,
             }
             app.edges.append(edge)

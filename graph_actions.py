@@ -1,16 +1,21 @@
+"""graph_actions.py - Các thao tác nghiệp vụ trên nút/cạnh và tô màu đồ thị."""
+
 from welsh_powell import welsh_powell_coloring
 
 
 def _reindex_nodes(app):
-    old_to_new_id = {node["id"]: i for i, node in enumerate(app.nodes)}
-
-    for i, node in enumerate(app.nodes):
-        node["id"] = i
+    old_to_new_id = {node["id"]: index for index, node in enumerate(app.nodes)}
+    for new_id, node in enumerate(app.nodes):
+        node["id"] = new_id
 
     app.edges = [
-        {**e, "node1_id": old_to_new_id[e["node1_id"]], "node2_id": old_to_new_id[e["node2_id"]]}
-        for e in app.edges
-        if e["node1_id"] in old_to_new_id and e["node2_id"] in old_to_new_id
+        {
+            **edge,
+            "node1_id": old_to_new_id[edge["node1_id"]],
+            "node2_id": old_to_new_id[edge["node2_id"]],
+        }
+        for edge in app.edges
+        if edge["node1_id"] in old_to_new_id and edge["node2_id"] in old_to_new_id
     ]
 
 
@@ -48,15 +53,17 @@ def delete_node(app, node):
 
     kept_edges = []
     for edge in app.edges:
-        if edge["node1_id"] != node_id and edge["node2_id"] != node_id:
+        node1_id, node2_id = edge["node1_id"], edge["node2_id"]
+        if node_id != node1_id and node_id != node2_id:
             kept_edges.append(edge)
             continue
 
         if edge.get("line"):
             app.canvas.delete(edge["line"])
-        other = edge["node2_id"] if edge["node1_id"] == node_id else edge["node1_id"]
-        if 0 <= other < len(app.nodes):
-            app.nodes[other]["degree"] -= 1
+
+        other_node_id = node2_id if node1_id == node_id else node1_id
+        if 0 <= other_node_id < len(app.nodes):
+            app.nodes[other_node_id]["degree"] -= 1
 
     app.edges = kept_edges
     app.nodes.remove(node)
@@ -71,7 +78,11 @@ def delete_node(app, node):
 
 
 def _edge_exists(app, node1_id, node2_id):
-    return any({e["node1_id"], e["node2_id"]} == {node1_id, node2_id} for e in app.edges)
+    for edge in app.edges:
+        left, right = edge["node1_id"], edge["node2_id"]
+        if (left == node1_id and right == node2_id) or (left == node2_id and right == node1_id):
+            return True
+    return False
 
 
 def connect_nodes(app, node1, node2):
@@ -81,8 +92,7 @@ def connect_nodes(app, node1, node2):
     if _edge_exists(app, node1_id, node2_id):
         return False, "Cạnh này đã tồn tại!"
 
-    edge = {"node1_id": node1_id, "node2_id": node2_id, "line": None}
-    app.edges.append(edge)
+    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None})
     node1["degree"] += 1
     node2["degree"] += 1
     app.render_graph()
@@ -90,10 +100,8 @@ def connect_nodes(app, node1, node2):
 
 
 def delete_edge(app, edge):
-    node1 = app.nodes[edge["node1_id"]]
-    node2 = app.nodes[edge["node2_id"]]
-    node1["degree"] -= 1
-    node2["degree"] -= 1
+    app.nodes[edge["node1_id"]]["degree"] -= 1
+    app.nodes[edge["node2_id"]]["degree"] -= 1
 
     if edge.get("line"):
         app.canvas.delete(edge["line"])
@@ -109,17 +117,12 @@ def apply_welsh_powell_coloring(app):
     max_color = max(node_colors)
     color_groups = [[] for _ in range(max_color + 1)]
     coloring_plan = []
-    indexed_nodes = sorted(
+    ordered_nodes = sorted(
         enumerate(app.nodes),
-        key=lambda pair: pair[1]["degree"],
-        reverse=True,
-    )
-    ordered_by_color_then_degree = sorted(
-        indexed_nodes,
-        key=lambda pair: (node_colors[pair[0]], -pair[1]["degree"], pair[0]),
+        key=lambda item: (node_colors[item[0]], -item[1]["degree"], item[0]),
     )
 
-    for node_index, node in ordered_by_color_then_degree:
+    for node_index, node in ordered_nodes:
         color_idx = node_colors[node_index]
         color_value = _generate_color(color_idx)
         node["color"] = color_value

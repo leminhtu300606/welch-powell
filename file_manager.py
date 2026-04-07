@@ -10,11 +10,15 @@ import xml.etree.ElementTree as ET
 from tkinter import filedialog, messagebox
 
 
+SVG_FILETYPES = [("SVG files", "*.svg"), ("All files", "*.*")]
+DEFAULT_DIR = os.path.dirname(os.path.abspath(__file__)) or "."
+
+
 def _collect_graph_data(app):
     """Thu thập dữ liệu đồ thị có thể serialize."""
-    return {
-        "scale": app.scale,
-        "nodes": [
+    serialized_nodes = []
+    for node in app.nodes:
+        serialized_nodes.append(
             {
                 "id": node["id"],
                 "x": node["x"],
@@ -24,15 +28,21 @@ def _collect_graph_data(app):
                 "color": node["color"],
                 "degree": node["degree"],
             }
-            for node in app.nodes
-        ],
-        "edges": [
+        )
+
+    serialized_edges = []
+    for edge in app.edges:
+        serialized_edges.append(
             {
                 "node1_id": edge["node1_id"],
                 "node2_id": edge["node2_id"],
             }
-            for edge in app.edges
-        ],
+        )
+
+    return {
+        "scale": app.scale,
+        "nodes": serialized_nodes,
+        "edges": serialized_edges,
     }
 
 
@@ -168,8 +178,8 @@ def save_graph_to_file(app, file_path=None):
     if file_path is None:
         file_path = filedialog.asksaveasfilename(
             defaultextension=".svg",
-            filetypes=[("SVG files", "*.svg"), ("All files", "*.*")],
-            initialdir=os.path.dirname(os.path.abspath(__file__)) or ".",
+            filetypes=SVG_FILETYPES,
+            initialdir=DEFAULT_DIR,
         )
     
     if not file_path:
@@ -197,8 +207,8 @@ def load_graph_from_file(app, file_path=None):
     """Tải trạng thái đồ thị từ file SVG đã lưu trước đó."""
     if file_path is None:
         file_path = filedialog.askopenfilename(
-            filetypes=[("SVG files", "*.svg"), ("All files", "*.*")],
-            initialdir=os.path.dirname(os.path.abspath(__file__)) or ".",
+            filetypes=SVG_FILETYPES,
+            initialdir=DEFAULT_DIR,
         )
     
     if not file_path:

@@ -1,3 +1,5 @@
+"""welsh_powell.py - Cài đặt thuật toán Welsh-Powell cho tô màu đỉnh đồ thị."""
+
 from typing import Dict, List
 
 

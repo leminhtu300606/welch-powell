@@ -1,3 +1,5 @@
+"""app_methods.py - Chứa trạng thái ứng dụng và các phương thức vẽ/zoom đồ thị."""
+
 import math
 
 
@@ -24,17 +26,16 @@ class AppMethods:
         self._apply_zoom(1 / factor)
 
     def _apply_zoom(self, factor):
-        if hasattr(self, "canvas"):
-            center_cx = self.canvas.winfo_width() / 2
-            center_cy = self.canvas.winfo_height() / 2
+        has_canvas = hasattr(self, "canvas")
+        if has_canvas:
+            center_cx, center_cy = self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
             center_wx, center_wy = self._canvas_to_world(center_cx, center_cy)
         else:
-            center_cx = center_cy = 0
-            center_wx = center_wy = 0
+            center_cx = center_cy = center_wx = center_wy = 0
 
         self.scale = max(0.1, self.scale * factor)
 
-        if hasattr(self, "canvas"):
+        if has_canvas:
             # Giữ tâm khung nhìn ổn định khi zoom.
             self.view_offset_x = center_cx - center_wx * self.scale
             self.view_offset_y = center_cy - center_wy * self.scale
@@ -101,11 +102,19 @@ class AppMethods:
         points = []
         for i in range(steps + 1):
             t = i / steps
-            mt = 1 - t
-            x = mt * mt * x1 + 2 * mt * t * cx + t * t * x2
-            y = mt * mt * y1 + 2 * mt * t * cy + t * t * y2
+            one_minus_t = 1 - t
+            x = one_minus_t * one_minus_t * x1 + 2 * one_minus_t * t * cx + t * t * x2
+            y = one_minus_t * one_minus_t * y1 + 2 * one_minus_t * t * cy + t * t * y2
             points.append((x, y))
         return points
+
+    def _curve_world_to_canvas_points(self, n1, n2, steps=24):
+        """Chuyển danh sách điểm đường cong (world) sang chuỗi tọa độ canvas."""
+        canvas_points = []
+        for x, y in self._edge_curve_points(n1, n2, steps=steps):
+            cx, cy = self._world_to_canvas(x, y)
+            canvas_points.extend((cx, cy))
+        return canvas_points
 
     @staticmethod
     def _distance_point_to_segment(px, py, x1, y1, x2, y2):
@@ -127,11 +136,7 @@ class AppMethods:
 
         n1 = self.nodes[edge["node1_id"]]
         n2 = self.nodes[edge["node2_id"]]
-        curve_points = self._edge_curve_points(n1, n2, steps=max(24, steps * 2))
-        canvas_points = []
-        for x, y in curve_points:
-            cx, cy = self._world_to_canvas(x, y)
-            canvas_points.extend([cx, cy])
+        canvas_points = self._curve_world_to_canvas_points(n1, n2, steps=max(24, steps * 2))
 
         if len(canvas_points) < 4:
             return
@@ -224,13 +229,8 @@ class AppMethods:
             edge["line"] = None
 
         for edge in self.edges:
-            n1 = self.nodes[edge["node1_id"]]
-            n2 = self.nodes[edge["node2_id"]]
-            curve_points = self._edge_curve_points(n1, n2)
-            canvas_points = []
-            for x, y in curve_points:
-                cx, cy = self._world_to_canvas(x, y)
-                canvas_points.extend([cx, cy])
+            n1, n2 = self.nodes[edge["node1_id"]], self.nodes[edge["node2_id"]]
+            canvas_points = self._curve_world_to_canvas_points(n1, n2)
             edge["line"] = self.canvas.create_line(
                 *canvas_points,
                 fill="gray",

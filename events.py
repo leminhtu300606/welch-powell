@@ -9,24 +9,28 @@ from graph_actions import connect_nodes, delete_edge, delete_node
 
 def on_canvas_click(app, event):
     """Xử lý khi click trên canvas"""
-    mode, app.selected_node = app.mode_var.get(), app.get_node_at(event.x, event.y)
-    n = app.selected_node
+    mode = app.mode_var.get()
+    selected_node = app.get_node_at(event.x, event.y)
+    app.selected_node = selected_node
 
     if mode == "delete":
-        if n:
-            delete_node(app, n)
+        if selected_node:
+            delete_node(app, selected_node)
         return
 
     if mode == "connect":
-        if not n:
+        if not selected_node:
             return
-        if app.first_node_for_connection is None:
-            app.first_node_for_connection = n
-            app.canvas.itemconfig(n["circle"], width=4, outline="red")
-        elif n == app.first_node_for_connection:
+        first = app.first_node_for_connection
+        if first is None:
+            app.first_node_for_connection = selected_node
+            app.canvas.itemconfig(selected_node["circle"], width=4, outline="red")
+            return
+
+        if selected_node == first:
             app._clear_connection_highlight()
         else:
-            ok, error_message = connect_nodes(app, app.first_node_for_connection, n)
+            ok, error_message = connect_nodes(app, first, selected_node)
             if not ok:
                 messagebox.showwarning("Lỗi", error_message)
             app._clear_connection_highlight()
@@ -40,8 +44,8 @@ def on_canvas_click(app, event):
             messagebox.showwarning("Thông báo", "Không có cạnh nào tại vị trí này!")
         return
 
-    if n:
-        app.canvas.itemconfig(n["circle"], width=3)
+    if selected_node:
+        app.canvas.itemconfig(selected_node["circle"], width=3)
         app.drag_start = (event.x, event.y)
         app.is_panning = False
     elif mode == "move":
@@ -54,20 +58,18 @@ def on_canvas_drag(app, event):
     if app.mode_var.get() != "move" or not app.drag_start:
         return
 
+    dx, dy = event.x - app.drag_start[0], event.y - app.drag_start[1]
     if app.selected_node:
-        app.selected_node["x"] += (event.x - app.drag_start[0]) / app.scale
-        app.selected_node["y"] += (event.y - app.drag_start[1]) / app.scale
-        app.drag_start = (event.x, event.y)
-        app.render_graph()
-        return
-
-    if app.is_panning:
-        dx = event.x - app.drag_start[0]
-        dy = event.y - app.drag_start[1]
+        app.selected_node["x"] += dx / app.scale
+        app.selected_node["y"] += dy / app.scale
+    elif app.is_panning:
         app.view_offset_x += dx
         app.view_offset_y += dy
-        app.drag_start = (event.x, event.y)
-        app.render_graph()
+    else:
+        return
+
+    app.drag_start = (event.x, event.y)
+    app.render_graph()
 
 
 def on_canvas_release(app, _event):

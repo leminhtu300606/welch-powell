@@ -1,3 +1,5 @@
+"""ui.py - Khởi tạo giao diện, toolbar và luồng thao tác tô màu."""
+
 import tkinter as tk
 from tkinter import messagebox
 from events import (
@@ -23,16 +25,13 @@ def update_tool_button_styles(app):
     for mode, check in app.tool_checks.items():
         is_active = active_mode == mode
         app.tool_vars[mode].set(is_active)
-        check.config(
-            bg="#1f618d" if is_active else "#2c3e50",
-            selectcolor="#1f618d" if is_active else "#34495e",
-        )
+        bg = "#1f618d" if is_active else "#2c3e50"
+        check.config(bg=bg, selectcolor=bg if is_active else "#34495e")
 
 
 def toggle_mode(app, mode):
-    current_mode, mode_is_checked = app.mode_var.get(), app.tool_vars[mode].get()
-
-    if mode_is_checked:
+    current_mode = app.mode_var.get()
+    if app.tool_vars[mode].get():
         app.mode_var.set(mode)
         for other_mode, var in app.tool_vars.items():
             var.set(other_mode == mode)
@@ -46,14 +45,9 @@ def toggle_mode(app, mode):
 
 
 def cycle_animation_speed(app):
-    current_label = getattr(app, "animation_speed_label", "Vừa")
-    labels = [label for label, _delay in ANIMATION_SPEED_LEVELS]
-
-    if current_label in labels:
-        next_index = (labels.index(current_label) + 1) % len(labels)
-    else:
-        next_index = 1
-
+    labels = [label for label, _ in ANIMATION_SPEED_LEVELS]
+    current = getattr(app, "animation_speed_label", "Vừa")
+    next_index = (labels.index(current) + 1) % len(labels) if current in labels else 1
     next_label, next_delay = ANIMATION_SPEED_LEVELS[next_index]
     app.animation_speed_label = next_label
     app.animation_delay_ms = next_delay
@@ -115,10 +109,10 @@ def _refresh_relationship_panel(app):
     app.relationship_edge_refs = []
 
     for edge in app.edges:
-        if edge["node1_id"] >= len(app.nodes) or edge["node2_id"] >= len(app.nodes):
+        n1_id, n2_id = edge["node1_id"], edge["node2_id"]
+        if n1_id >= len(app.nodes) or n2_id >= len(app.nodes):
             continue
-        node1 = app.nodes[edge["node1_id"]]
-        node2 = app.nodes[edge["node2_id"]]
+        node1, node2 = app.nodes[n1_id], app.nodes[n2_id]
         app.relation_listbox.insert(tk.END, f"{node1['label']} {node2['label']}")
         app.relationship_edge_refs.append(edge)
 
@@ -136,16 +130,20 @@ def setup_interface(app):
 
     tk.Label(app.toolbar, text="Công Cụ", font=("Arial", 11, "bold"), bg="#2c3e50", fg="white").pack(pady=10)
 
-    app.node_btn = tk.Button(
-        app.toolbar,
-        text="+ Nút Mới",
-        font=("Arial", 10, "bold"),
-        bg="#3498db",
-        fg="white",
-        cursor="hand2",
-        width=12,
-        height=2,
-    )
+    def create_toolbar_button(text, bg, command, *, font=("Arial", 10, "bold"), height=2):
+        return tk.Button(
+            app.toolbar,
+            text=text,
+            font=font,
+            bg=bg,
+            fg="white",
+            cursor="hand2",
+            width=12,
+            height=height,
+            command=command,
+        )
+
+    app.node_btn = create_toolbar_button("+ Nút Mới", "#3498db", None)
     app.node_btn.pack(pady=10)
     app.node_btn.bind("<ButtonRelease-1>", lambda event: on_toolbar_button_release(app, event))
 
@@ -186,55 +184,22 @@ def setup_interface(app):
 
     tk.Label(app.toolbar, bg="#2c3e50").pack(pady=20, expand=True)
 
-    app.open_btn = tk.Button(
-        app.toolbar,
-        text="📂 Mở",
-        font=("Arial", 10, "bold"),
-        bg="#9b59b6",
-        fg="white",
-        cursor="hand2",
-        width=12,
-        height=2,
-        command=lambda app=app: load_graph_from_file(app),
-    )
+    app.open_btn = create_toolbar_button("📂 Mở", "#9b59b6", lambda: load_graph_from_file(app))
     app.open_btn.pack(pady=6)
 
-    app.save_btn = tk.Button(
-        app.toolbar,
-        text="💾 Lưu",
-        font=("Arial", 10, "bold"),
-        bg="#e74c3c",
-        fg="white",
-        cursor="hand2",
-        width=12,
-        height=2,
-        command=lambda app=app: save_graph_to_file(app),
-    )
+    app.save_btn = create_toolbar_button("💾 Lưu", "#e74c3c", lambda: save_graph_to_file(app))
     app.save_btn.pack(pady=6)
 
-    app.run_btn = tk.Button(
-        app.toolbar,
-        text="> Chạy",
-        font=("Arial", 11, "bold"),
-        bg="#27ae60",
-        fg="white",
-        cursor="hand2",
-        width=12,
-        height=2,
-        command=lambda app=app: run_coloring(app),
-    )
+    app.run_btn = create_toolbar_button("> Chạy", "#27ae60", lambda: run_coloring(app), font=("Arial", 11, "bold"))
 
     app.animation_speed_label = "Vừa"
     app.animation_delay_ms = 350
-    app.speed_btn = tk.Button(
-        app.toolbar,
-        text="Tốc độ: Vừa",
+    app.speed_btn = create_toolbar_button(
+        "Tốc độ: Vừa",
+        "#f39c12",
+        lambda: cycle_animation_speed(app),
         font=("Arial", 9, "bold"),
-        bg="#f39c12",
-        fg="white",
-        cursor="hand2",
-        width=12,
-        command=lambda app=app: cycle_animation_speed(app),
+        height=1,
     )
     app.speed_btn.pack(pady=6)
 

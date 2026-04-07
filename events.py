@@ -43,15 +43,38 @@ def on_canvas_click(app, event):
     if n:
         app.canvas.itemconfig(n["circle"], width=3)
         app.drag_start = (event.x, event.y)
+        app.is_panning = False
+    elif mode == "move":
+        app.drag_start = (event.x, event.y)
+        app.is_panning = True
 
 
 def on_canvas_drag(app, event):
     """Xử lý khi kéo chuột trên canvas"""
-    if app.mode_var.get() == "move" and app.selected_node and app.drag_start:
+    if app.mode_var.get() != "move" or not app.drag_start:
+        return
+
+    if app.selected_node:
         app.selected_node["x"] += (event.x - app.drag_start[0]) / app.scale
         app.selected_node["y"] += (event.y - app.drag_start[1]) / app.scale
         app.drag_start = (event.x, event.y)
         app.render_graph()
+        return
+
+    if app.is_panning:
+        dx = event.x - app.drag_start[0]
+        dy = event.y - app.drag_start[1]
+        app.view_offset_x += dx
+        app.view_offset_y += dy
+        app.drag_start = (event.x, event.y)
+        app.render_graph()
+
+
+def on_canvas_release(app, _event):
+    """Kết thúc thao tác kéo nút hoặc kéo khung nhìn."""
+    app.drag_start = None
+    app.selected_node = None
+    app.is_panning = False
 
 
 def on_mouse_wheel(app, event):

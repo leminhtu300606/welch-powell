@@ -3,6 +3,7 @@ from tkinter import messagebox
 from events import (
     on_canvas_click,
     on_canvas_drag,
+    on_canvas_release,
     on_mouse_wheel,
     on_toolbar_button_release,
 )
@@ -263,6 +264,7 @@ def setup_interface(app):
 
     app.canvas.bind("<Button-1>", lambda event: on_canvas_click(app, event))
     app.canvas.bind("<B1-Motion>", lambda event: on_canvas_drag(app, event))
+    app.canvas.bind("<ButtonRelease-1>", lambda event: on_canvas_release(app, event))
     
     # Zoom bằng scroll wheel
     app.canvas.bind("<MouseWheel>", lambda event: on_mouse_wheel(app, event))  # Windows

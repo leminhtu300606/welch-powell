@@ -6,6 +6,10 @@ class AppMethods:
         self.nodes, self.edges = [], []
         self.selected_node = self.drag_start = self.first_node_for_connection = None
         self.scale = 1.0
+        self.view_offset_x = 0.0
+        self.view_offset_y = 0.0
+        self.auto_center_pending = True
+        self.is_panning = False
 
     def _clear_connection_highlight(self):
         """Xóa highlight khỏi nút được chọn để kết nối."""
@@ -20,16 +24,54 @@ class AppMethods:
         self._apply_zoom(1 / factor)
 
     def _apply_zoom(self, factor):
+        if hasattr(self, "canvas"):
+            center_cx = self.canvas.winfo_width() / 2
+            center_cy = self.canvas.winfo_height() / 2
+            center_wx, center_wy = self._canvas_to_world(center_cx, center_cy)
+        else:
+            center_cx = center_cy = 0
+            center_wx = center_wy = 0
+
         self.scale = max(0.1, self.scale * factor)
+
+        if hasattr(self, "canvas"):
+            # Giữ tâm khung nhìn ổn định khi zoom.
+            self.view_offset_x = center_cx - center_wx * self.scale
+            self.view_offset_y = center_cy - center_wy * self.scale
+
         self.render_graph()
 
     def _world_to_canvas(self, wx, wy):
         """Chuyển đổi từ tọa độ thế giới sang tọa độ canvas."""
-        return wx * self.scale, wy * self.scale
+        return wx * self.scale + self.view_offset_x, wy * self.scale + self.view_offset_y
 
     def _canvas_to_world(self, cx, cy):
         """Chuyển đổi từ tọa độ canvas sang tọa độ thế giới."""
-        return cx / self.scale, cy / self.scale
+        return (cx - self.view_offset_x) / self.scale, (cy - self.view_offset_y) / self.scale
+
+    def _center_view_on_graph(self):
+        """Canh giữa đồ thị một lần để đảm bảo nhìn thấy các nút khi khởi tạo/tải file."""
+        if not hasattr(self, "canvas"):
+            return
+
+        canvas_w = max(1, self.canvas.winfo_width())
+        canvas_h = max(1, self.canvas.winfo_height())
+
+        if not self.nodes:
+            self.view_offset_x = canvas_w / 2
+            self.view_offset_y = canvas_h / 2
+            return
+
+        min_x = min(node["x"] - node["radius"] for node in self.nodes)
+        max_x = max(node["x"] + node["radius"] for node in self.nodes)
+        min_y = min(node["y"] - node["radius"] for node in self.nodes)
+        max_y = max(node["y"] + node["radius"] for node in self.nodes)
+
+        graph_center_x = ((min_x + max_x) / 2) * self.scale
+        graph_center_y = ((min_y + max_y) / 2) * self.scale
+
+        self.view_offset_x = canvas_w / 2 - graph_center_x
+        self.view_offset_y = canvas_h / 2 - graph_center_y
 
     def _edge_control_point(self, n1, n2):
         """Tính điểm điều khiển cho cạnh cong để giảm chồng lấn."""
@@ -174,6 +216,9 @@ class AppMethods:
     def render_graph(self):
         """Vẽ lại toàn bộ đồ thị (cạnh và nút)"""
         self.canvas.delete("all")
+        if self.auto_center_pending:
+            self._center_view_on_graph()
+            self.auto_center_pending = False
 
         for edge in self.edges:
             edge["line"] = None

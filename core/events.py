@@ -63,6 +63,18 @@ def on_canvas_click(app, event):
         if selected_node == first:
             app._clear_connection_highlight()
         else:
+            edge_exists = False
+            for edge in app.edges:
+                if (edge["node1_id"] == first["id"] and edge["node2_id"] == selected_node["id"]) or \
+                   (edge["node1_id"] == selected_node["id"] and edge["node2_id"] == first["id"]):
+                    edge_exists = True
+                    break
+            
+            if edge_exists:
+                messagebox.showwarning("Lỗi", "Cạnh nối giữa 2 đỉnh này đã tồn tại!")
+                app._clear_connection_highlight()
+                return
+
             weight = None
             if getattr(app, "algorithm_mode", "") in ["dijkstra", "prim", "kruskal"]:
                 w_input = _ask_positive_weight_vi(

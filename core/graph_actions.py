@@ -115,6 +115,12 @@ def delete_edge(app, edge):
     app.render_graph()
 
 
+def set_edge_weight(app, edge, weight):
+    """Cập nhật trọng số của một cạnh và vẽ lại đồ thị."""
+    edge["weight"] = weight
+    app.render_graph()
+
+
 def apply_welsh_powell_coloring(app):
     node_colors = welsh_powell_coloring(app.nodes, app.edges)
     if not node_colors:

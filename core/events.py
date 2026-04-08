@@ -1,7 +1,7 @@
 """core/events.py - Xử lý sự kiện"""
 from tkinter import messagebox, simpledialog
 from core.graph_actions import (
-    connect_nodes, delete_edge, delete_node
+    connect_nodes, delete_edge, delete_node, set_edge_weight
 )
 
 
@@ -83,6 +83,25 @@ def on_canvas_click(app, event):
         edge = app.get_edge_at(event.x, event.y)
         if edge: delete_edge(app, edge)
         else: messagebox.showwarning("Thông báo", "Không có cạnh tại đây!")
+        return
+
+    if mode == "edit_weight":
+        edge = app.get_edge_at(event.x, event.y)
+        if not edge:
+            messagebox.showwarning("Thông báo", "Hãy click trực tiếp lên một cạnh để sửa trọng số!")
+            return
+
+        current_weight = edge.get("weight", 1)
+        new_weight = _ask_positive_weight_vi(
+            app.root,
+            "Sửa trọng số",
+            f"Nhập trọng số mới cho cạnh {app.nodes[edge['node1_id']]['label']} - {app.nodes[edge['node2_id']]['label']}:",
+            initialvalue=current_weight,
+        )
+        if new_weight is None:
+            return
+
+        set_edge_weight(app, edge, new_weight)
         return
 
     if mode == "edit_label":

@@ -167,24 +167,37 @@ def _apply_graph_data(app, graph_data):
 
 
 def save_graph_to_file(app, file_path=None):
-    """Lưu trạng thái đồ thị ra file SVG có nhúng dữ liệu để tải lại."""
+    """Lưu nhanh (Quick Save). Ghi đè lên file hiện tại, nếu chưa có thì gọi Save As."""
     current_file_path = getattr(app, "current_file_path", None)
 
+    # Nếu đã có file mở sẵn -> Ghi đè thẳng luôn (Chuẩn UX)
     if file_path is None and current_file_path:
-        should_save = messagebox.askyesno(
-            "Xác nhận lưu",
-            f"File hiện tại đã được mở trước đó.\nBạn có muốn lưu thay đổi vào:\n{os.path.basename(current_file_path)} không?",
-        )
-        if not should_save:
-            return False
         file_path = current_file_path
-
+    
+    # Nếu là bản vẽ mới tinh -> Gọi hộp thoại Save As
     if file_path is None:
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".svg",
-            filetypes=SVG_FILETYPES,
-            initialdir=DEFAULT_DIR,
-        )
+        return save_graph_as(app)
+    
+    try:
+        graph_data = _collect_graph_data(app)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(_graph_data_to_svg(graph_data))
+        
+        messagebox.showinfo("Thành công", f"Đã lưu đè lên: {os.path.basename(file_path)}")
+        return True
+    except Exception as e:
+        messagebox.showerror("Lỗi", f"Không thể lưu file: {str(e)}")
+        return False
+
+
+def save_graph_as(app):
+    """Lưu thành... (Save As). Luôn luôn mở hộp thoại để chọn nơi lưu mới."""
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".svg",
+        filetypes=SVG_FILETYPES,
+        initialdir=DEFAULT_DIR,
+        title="Lưu đồ thị thành..."
+    )
     
     if not file_path:
         return False
@@ -197,9 +210,9 @@ def save_graph_to_file(app, file_path=None):
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(_graph_data_to_svg(graph_data))
 
-        app.current_file_path = file_path
+        app.current_file_path = file_path # Cập nhật lại đường dẫn hiện tại sang file mới
 
-        messagebox.showinfo("Thành công", f"Đã lưu đồ thị vào: {os.path.basename(file_path)}")
+        messagebox.showinfo("Thành công", f"Đã lưu bản sao vào: {os.path.basename(file_path)}")
         return True
  
     except Exception as e:
@@ -208,6 +221,8 @@ def save_graph_to_file(app, file_path=None):
 
 
 def load_graph_from_file(app, file_path=None):
+    if not prompt_save_if_needed(app):
+        return
     """Tải trạng thái đồ thị từ file SVG đã lưu trước đó."""
     if file_path is None:
         file_path = filedialog.askopenfilename(
@@ -234,3 +249,46 @@ def load_graph_from_file(app, file_path=None):
     except Exception as e:
         messagebox.showerror("Lỗi", f"Không thể tải file: {str(e)}")
         return False
+def prompt_save_if_needed(app):
+    """Bật hộp thoại khuyên người dùng lưu đồ thị hiện tại (nếu có dữ liệu)."""
+    # Nếu trên màn hình chưa có đỉnh hay cạnh nào thì coi như trống, cho đi tiếp luôn
+    if not getattr(app, "nodes", []) and not getattr(app, "edges", []):
+        return True
+    # Bật hộp thoại hỏi: Yes (Lưu), No (Bỏ qua), Cancel (Hủy thao tác)
+    reply = messagebox.askyesnocancel(
+        "Chưa lưu đồ thị",
+        "Đồ thị hiện tại có thể có thay đổi chưa được lưu.\nBạn có muốn lưu lại trước khi tiếp tục không?"
+    )
+
+    if reply is None:
+        return False  # Người dùng bấm Cancel -> Hủy lệnh (dừng lại)
+
+    if reply is True:
+        # Người dùng bấm Yes -> Gọi hàm lưu. Chỉ đi tiếp nếu lưu thành công
+        return save_graph_to_file(app)
+
+    # Người dùng bấm No -> Chấp nhận mất dữ liệu cũ, đi tiếp
+    return True
+ 
+
+
+def create_new_graph(app):
+    """Xóa trắng đồ thị hiện tại để tạo bản vẽ mới."""
+    # Kiểm tra xem có cần lưu không trước khi tạo mới
+    if not prompt_save_if_needed(app):
+        return
+
+    # Reset toàn bộ trạng thái về ban đầu
+    app.init_state()
+    app.current_file_path = None
+    
+    # Dọn dẹp sạch sẽ các bảng kết quả của thuật toán (nếu có)
+    if hasattr(app, "tree") and app.tree.winfo_exists():
+        for item in app.tree.get_children():
+            app.tree.delete(item)
+    if hasattr(app, "result_frame") and app.result_frame.winfo_exists():
+        for widget in app.result_frame.winfo_children():
+            widget.destroy()
+
+    app.render_graph()
+    messagebox.showinfo("Thành công", "Đã tạo bản vẽ mới! Bạn có thể bắt đầu vẽ.")

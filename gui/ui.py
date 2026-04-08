@@ -1,7 +1,7 @@
 """gui/ui.py - Khởi tạo bộ khung và phân nhánh giao diện."""
 import tkinter as tk
 from core.events import on_canvas_click, on_canvas_drag, on_canvas_release, on_mouse_wheel, on_toolbar_button_release
-from utils.file_manager import load_graph_from_file, save_graph_to_file
+from utils.file_manager import prompt_save_if_needed,save_graph_as,create_new_graph, save_graph_to_file, load_graph_from_file
 
 from gui.welsh_powell_ui import setup_welsh_powell_ui
 from gui.dijkstra_ui import setup_dijkstra_ui
@@ -148,6 +148,13 @@ def setup_interface(app):
 
     elif app.algorithm_mode == "kruskal":
         setup_kruskal_ui(app, add_tool_check, create_toolbar_button)
+    # --- CHỨC NĂNG THOÁT AN TOÀN ---
+    def on_closing():
+        if prompt_save_if_needed(app):
+            app.root.destroy() # Chỉ đóng cửa sổ khi hàm trả về True
+
+    # Gắn sự kiện khi bấm nút X đỏ của Windows
+    app.root.protocol("WM_DELETE_WINDOW", on_closing)
 
     # ===== COMMON BUTTON =====
     app.run_btn.pack(pady=15)
@@ -161,9 +168,14 @@ def setup_interface(app):
     )
     app.speed_btn.pack(pady=5)
 
-    create_toolbar_button(app, "📂 Mở", "#9b59b6", lambda: load_graph_from_file(app), height=1).pack(pady=2)
-    create_toolbar_button(app, "💾 Lưu", "#e74c3c", lambda: save_graph_to_file(app), height=1).pack(pady=2)
-
+    create_toolbar_button(app, "Mới", "#54b5e6" ,lambda: create_new_graph(app),height=1).pack(pady=2)
+    create_toolbar_button(app, "Mở", "#9b59b6", lambda: load_graph_from_file(app), height=1).pack(pady=2)
+    create_toolbar_button(app, "Lưu", "#e74c3c", lambda: save_graph_to_file(app), height=1).pack(pady=2)
+    create_toolbar_button(app, "Save as...", "#ee2748", lambda: save_graph_as(app), height=1).pack(pady=2)
+    app.root.bind("<Control-n>", lambda event: create_new_graph(app))
+    app.root.bind("<Control-o>", lambda event: load_graph_from_file(app))
+    app.root.bind("<Control-s>", lambda event: save_graph_to_file(app))
+    app.root.bind("<Control-Shift-s>", lambda event: save_graph_as(app))
     # ===== BACK BUTTON =====
     create_toolbar_button(app, "⬅ Quay Lại", "#34495e", lambda: app.on_back_callback(), height=1).pack(pady=2, side="bottom")
 

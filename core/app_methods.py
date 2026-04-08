@@ -165,6 +165,8 @@ class AppMethods:
                 )
 
         # ================= DRAW NODES =================
+        prim_start_vertex = getattr(self, "prim_start_vertex", None)
+        
         for node in self.nodes:
             is_highlighted = node["id"] in h_path
 
@@ -173,6 +175,9 @@ class AppMethods:
 
             if is_highlighted:
                 outline_color = h_color
+                outline_width = 4
+            elif node["id"] == prim_start_vertex:
+                outline_color = "#2980b9"
                 outline_width = 4
             elif node["id"] in dijkstra_role_by_node_id:
                 outline_color = "#16a085" if dijkstra_role_by_node_id[node["id"]] == "BĐ" else "#8e44ad"

@@ -139,8 +139,8 @@ def apply_welsh_powell_coloring(app):
 
 
 
-def run_prim_algorithm(app, start_edge=None):
-    mst = prim(app.nodes, app.edges, start_edge)
+def run_prim_algorithm(app, start_vertex=None):
+    mst = prim(app.nodes, app.edges, start_vertex)
     if not mst:
         return None
 

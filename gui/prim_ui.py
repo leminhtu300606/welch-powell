@@ -11,7 +11,7 @@ def setup_prim_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
     add_tool_check(app, "Xóa cạnh", "delete_edge")
-    add_tool_check(app, "Chọn cây khung", "prim_select")
+    add_tool_check(app, "Chọn đỉnh bắt đầu", "prim_select")
 
     # ===== BUTTON RUN =====
     app.run_btn = create_toolbar_button(
@@ -40,8 +40,8 @@ def run_prim_animation(app):
         messagebox.showwarning("Lỗi", "Đồ thị chưa có cạnh để chạy Prim.")
         return
 
-    selected_start_edge = getattr(app, "prim_start_edge", None)
-    mst_edges = run_prim_algorithm(app, selected_start_edge)
+    selected_start_vertex = getattr(app, "prim_start_vertex", None)
+    mst_edges = run_prim_algorithm(app, selected_start_vertex)
 
     if not mst_edges:
         messagebox.showerror("Lỗi", "Không tìm được cây khung (graph có thể không liên thông)")

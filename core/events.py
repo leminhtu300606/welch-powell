@@ -157,17 +157,17 @@ def on_canvas_click(app, event):
                 if hasattr(app, "dijkstra_notice_label"):
                     app.dijkstra_notice_label.config(fg="#2c3e50")
         return
-    # ================= PRIM SELECT EDGE =================
+    # ================= PRIM SELECT VERTEX =================
     if mode == "prim_select":
-        edge = app.get_edge_at(event.x, event.y)
-        if not edge:
-            messagebox.showwarning("Thông báo", "Hãy click trực tiếp lên một cạnh để chọn cạnh bắt đầu.")
+        node = app.get_node_at(event.x, event.y)
+        if not node:
+            messagebox.showwarning("Thông báo", "Hãy click trực tiếp lên một đỉnh để chọn đỉnh bắt đầu.")
             return
 
-        app.prim_start_edge = (edge["node1_id"], edge["node2_id"])
+        app.prim_start_vertex = node["id"]
         app.highlighted_path = []
         app.highlighted_color = "#2980b9"
-        app.highlighted_edges = [edge]
+        app.highlighted_edges = []
         app.render_graph()
         return
     

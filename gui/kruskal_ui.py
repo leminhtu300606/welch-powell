@@ -41,6 +41,12 @@ def setup_kruskal_ui(app, add_tool_check, create_toolbar_button):
 
 def run_kruskal_animation(app):
 
+    # ===== XÓA KẾT QUẢ CŨ =====
+    for item in app.tree.get_children():
+        app.tree.delete(item)
+    for widget in app.result_frame.winfo_children():
+        widget.destroy()
+
     # ===== CHẠY THUẬT TOÁN =====
     result = run_kruskal_algorithm(app)
 

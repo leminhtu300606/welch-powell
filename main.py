@@ -6,24 +6,25 @@ from core.app_methods import AppMethods
 
 
 class GraphApp(AppMethods):
-    def __init__(self, root, mode):
+    def __init__(self, root, mode, on_back_callback=None):
         self.root = root
         self.algorithm_mode = mode  # thêm prim, kruskal
+        self.on_back_callback = on_back_callback
         self.init_state()
         setup_interface(self)
 
 
-def start_app(mode):
-    launcher.destroy()
-    root = tk.Tk()
-    app = GraphApp(root, mode)
-    root.mainloop()
+def go_back_to_menu(root):
+    """Đóng cửa sổ thuật toán và quay lại menu chính"""
+    root.destroy()
+    show_launcher()
 
 
-if __name__ == "__main__":
+def show_launcher():
+    """Hiển thị cửa sổ chọn thuật toán"""
     launcher = tk.Tk()
     launcher.title("Chọn Thuật Toán")
-    launcher.geometry("350x300")  # tăng chiều cao
+    launcher.geometry("350x300")
 
     tk.Label(
         launcher,
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         bg="#3498db", fg="white",
         font=("Arial", 10, "bold"),
         cursor="hand2",
-        command=lambda: start_app("welsh_powell")
+        command=lambda: start_app(launcher, "welsh_powell")
     ).pack(pady=5)
 
     # ================= DIJKSTRA =================
@@ -51,7 +52,7 @@ if __name__ == "__main__":
         bg="#27ae60", fg="white",
         font=("Arial", 10, "bold"),
         cursor="hand2",
-        command=lambda: start_app("dijkstra")
+        command=lambda: start_app(launcher, "dijkstra")
     ).pack(pady=5)
 
     # ================= PRIM =================
@@ -62,7 +63,7 @@ if __name__ == "__main__":
         bg="#f39c12", fg="white",
         font=("Arial", 10, "bold"),
         cursor="hand2",
-        command=lambda: start_app("prim")
+        command=lambda: start_app(launcher, "prim")
     ).pack(pady=5)
 
     # ================= KRUSKAL =================
@@ -73,7 +74,19 @@ if __name__ == "__main__":
         bg="#9b59b6", fg="white",
         font=("Arial", 10, "bold"),
         cursor="hand2",
-        command=lambda: start_app("kruskal")
+        command=lambda: start_app(launcher, "kruskal")
     ).pack(pady=5)
 
     launcher.mainloop()
+
+
+def start_app(launcher, mode):
+    launcher.destroy()
+    root = tk.Tk()
+    root.state('zoomed')  # Hiển thị toàn màn hình
+    app = GraphApp(root, mode, on_back_callback=lambda: go_back_to_menu(root))
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    show_launcher()

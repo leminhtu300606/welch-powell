@@ -88,7 +88,6 @@ def setup_interface(app):
         title_text = "Graph App"
 
     app.root.title(f"Mô phỏng: {title_text}")
-    app.root.geometry("1150x700")
 
     main_frame = tk.Frame(app.root)
     main_frame.pack(fill="both", expand=True)
@@ -164,6 +163,9 @@ def setup_interface(app):
 
     create_toolbar_button(app, "📂 Mở", "#9b59b6", lambda: load_graph_from_file(app), height=1).pack(pady=2)
     create_toolbar_button(app, "💾 Lưu", "#e74c3c", lambda: save_graph_to_file(app), height=1).pack(pady=2)
+
+    # ===== BACK BUTTON =====
+    create_toolbar_button(app, "⬅ Quay Lại", "#34495e", lambda: app.on_back_callback(), height=1).pack(pady=2, side="bottom")
 
     # ===== EVENTS =====
     app.canvas.bind("<Button-1>", lambda e: on_canvas_click(app, e))

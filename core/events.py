@@ -85,19 +85,31 @@ def on_canvas_click(app, event):
         else: messagebox.showwarning("Thông báo", "Không có cạnh tại đây!")
         return
 
-    if mode == "edit_weight":
-        edge = app.get_edge_at(event.x, event.y)
-        if edge:
-            n1, n2 = app.nodes[edge["node1_id"]]["label"], app.nodes[edge["node2_id"]]["label"]
-            new_w = _ask_positive_weight_vi(
-                app.root,
-                "Sửa trọng số",
-                f"Nhập trọng số mới cho cạnh {n1} - {n2}:",
-                initialvalue=edge.get("weight", 1),
+    if mode == "edit_label":
+        if selected_node:
+            new_label = simpledialog.askstring(
+                "Sửa tên đỉnh", 
+                f"Nhập tên/chữ cái mới cho đỉnh '{selected_node['label']}':", 
+                initialvalue=selected_node['label'], 
+                parent=app.root
             )
-            if new_w is not None:
-                edge["weight"] = new_w
-                app.render_graph()
+            
+            if new_label is not None:  # Người dùng không bấm Cancel
+                new_label = new_label.strip()
+                if new_label == "":
+                    messagebox.showwarning("Lỗi nhập liệu", "Tên đỉnh không được để trống!")
+                    return
+                    
+                if new_label == str(selected_node["label"]):
+                    return  # Giữ nguyên tên cũ thì không làm gì cả
+                
+                # BẪY LỖI: Kiểm tra xem tên mới đã bị đỉnh nào khác lấy chưa
+                existing_labels = {str(n["label"]).upper() for n in app.nodes if n["id"] != selected_node["id"]}
+                if new_label.upper() in existing_labels:
+                    messagebox.showwarning("Lỗi trùng lặp", f"Đỉnh mang tên '{new_label}' đã tồn tại trên đồ thị!\nVui lòng chọn tên khác.")
+                else:
+                    selected_node["label"] = new_label
+                    app.render_graph()
         return
 
     if mode == "edit_label":

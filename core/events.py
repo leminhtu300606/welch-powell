@@ -1,5 +1,4 @@
 """core/events.py - Xử lý sự kiện"""
-from statistics import mode
 from tkinter import messagebox, simpledialog
 from core.graph_actions import (
     connect_nodes, delete_edge, delete_node

@@ -136,16 +136,6 @@ def apply_welsh_powell_coloring(app):
         color_groups[color_idx].append(node["label"])
 
     return max_color, color_groups, coloring_plan
-from algorithms.dijkstra import dijkstra
-
-def run_dijkstra_algorithm(app, start_node, end_node):
-    """Thực thi và trả về danh sách các nút thuộc đường đi ngắn nhất."""
-    path_indices = dijkstra(app.nodes, app.edges, start_node["id"], end_node["id"])
-    if not path_indices:
-        return None
-    
-    # Chuyển đổi chỉ số thành đối tượng node thực tế
-    return [app.nodes[idx] for idx in path_indices]
 
 
 

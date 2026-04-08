@@ -2,7 +2,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from algorithms.dijkstra import dijkstra_table_and_paths
-from core.graph_actions import run_prim_algorithm, run_kruskal_algorithm
 
 
 def _set_dijkstra_notice(app, text, color="#2c3e50"):
@@ -62,32 +61,7 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     app.result_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
 def run_algorithm(app):
-    from tkinter import messagebox
-
-    # ================= DIJKSTRA =================
-    if app.algorithm_mode == "dijkstra":
-        run_dijkstra_animation(app)
-        return
-
-    # ================= PRIM =================
-    elif app.algorithm_mode == "prim":
-        if not app.edges:
-            messagebox.showwarning("Lỗi", "Đồ thị chưa có cạnh để chạy Prim.")
-            return
-
-        run_prim_algorithm(app, getattr(app, "prim_start_edge", None))
-        app.render_graph()
-
-        messagebox.showinfo("Kết quả", "Đã tìm xong cây khung nhỏ nhất (Prim)")
-        return
-
-    # ================= KRUSKAL =================
-    elif app.algorithm_mode == "kruskal":
-        run_kruskal_algorithm(app)
-        app.render_graph()
-
-        messagebox.showinfo("Kết quả", "Đã tìm xong cây khung nhỏ nhất (Kruskal)")
-        return
+    run_dijkstra_animation(app)
 
 def run_dijkstra_animation(app):
     if (

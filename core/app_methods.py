@@ -66,40 +66,6 @@ class AppMethods:
         self.view_offset_x = canvas_w / 2 - graph_center_x
         self.view_offset_y = canvas_h / 2 - graph_center_y
 
-    def _edge_control_point(self, n1, n2):
-        x1, y1 = n1["x"], n1["y"]
-        x2, y2 = n2["x"], n2["y"]
-        dx, dy = x2 - x1, y2 - y1
-        distance = math.hypot(dx, dy)
-        if distance == 0: return x1, y1
-
-        mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
-        perp_x, perp_y = -dy / distance, dx / distance
-        pair_key = (min(n1["id"], n2["id"]), max(n1["id"], n2["id"]))
-        direction = 1 if (pair_key[0] + pair_key[1]) % 2 == 0 else -1
-        offset = max(18, min(60, distance * 0.12)) * direction
-        return mid_x + perp_x * offset, mid_y + perp_y * offset
-
-    def _edge_curve_points(self, n1, n2, steps=24):
-        x1, y1 = n1["x"], n1["y"]
-        cx, cy = self._edge_control_point(n1, n2)
-        x2, y2 = n2["x"], n2["y"]
-        points = []
-        for i in range(steps + 1):
-            t = i / steps
-            one_minus_t = 1 - t
-            x = one_minus_t * one_minus_t * x1 + 2 * one_minus_t * t * cx + t * t * x2
-            y = one_minus_t * one_minus_t * y1 + 2 * one_minus_t * t * cy + t * t * y2
-            points.append((x, y))
-        return points
-
-    def _curve_world_to_canvas_points(self, n1, n2, steps=24):
-        canvas_points = []
-        for x, y in self._edge_curve_points(n1, n2, steps=steps):
-            cx, cy = self._world_to_canvas(x, y)
-            canvas_points.extend((cx, cy))
-        return canvas_points
-
     @staticmethod
     def _distance_point_to_segment(px, py, x1, y1, x2, y2):
         dx, dy = x2 - x1, y2 - y1

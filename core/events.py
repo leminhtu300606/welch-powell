@@ -33,7 +33,7 @@ def on_canvas_click(app, event):
         if selected_node == first:
             app._clear_connection_highlight()
         else:
-            weight = 1
+            weight = None
             if getattr(app, "algorithm_mode", "") in ["dijkstra", "prim", "kruskal"]:
                 w_input = simpledialog.askinteger("Trọng số", f"Trọng số {first['label']} -> {selected_node['label']}:", minvalue=1, parent=app.root)
                 if w_input is None:

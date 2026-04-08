@@ -87,14 +87,18 @@ def _edge_exists(app, node1_id, node2_id):
     return False
 
 
-def connect_nodes(app, node1, node2, weight=1): # Thêm tham số weight
+def connect_nodes(app, node1, node2, weight=None):
     node1_id, node2_id = node1["id"], node2["id"]
     if node1_id == node2_id:
         return False, "Không thể liên kết nút với chính nó!"
     if _edge_exists(app, node1_id, node2_id):
         return False, "Cạnh này đã tồn tại!"
 
-    app.edges.append({"node1_id": node1_id, "node2_id": node2_id, "line": None, "weight": weight})
+    edge_data = {"node1_id": node1_id, "node2_id": node2_id, "line": None}
+    if weight is not None:
+        edge_data["weight"] = weight
+
+    app.edges.append(edge_data)
     node1["degree"] += 1
     node2["degree"] += 1
     app.render_graph()

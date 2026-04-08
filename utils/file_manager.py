@@ -32,13 +32,13 @@ def _collect_graph_data(app):
 
     serialized_edges = []
     for edge in app.edges:
-        serialized_edges.append(
-            {
-                "node1_id": edge["node1_id"],
-                "node2_id": edge["node2_id"],
-                "weight": edge.get("weight", 1), # THÊM LƯU TRỌNG SỐ Ở ĐÂY
-            }
-        )
+        edge_data = {
+            "node1_id": edge["node1_id"],
+            "node2_id": edge["node2_id"],
+        }
+        if edge.get("weight") is not None:
+            edge_data["weight"] = edge["weight"]
+        serialized_edges.append(edge_data)
 
     return {
         "scale": app.scale,
@@ -156,9 +156,11 @@ def _apply_graph_data(app, graph_data):
             edge = {
                 "node1_id": edge_data["node1_id"],
                 "node2_id": edge_data["node2_id"],
-                "weight": edge_data.get("weight", 1), # TẢI TRỌNG SỐ TỪ FILE VÀO ĐÂY
                 "line": None,
             }
+            loaded_weight = edge_data.get("weight")
+            if loaded_weight is not None and getattr(app, "algorithm_mode", "") != "welsh_powell":
+                edge["weight"] = loaded_weight
             app.edges.append(edge)
 
     app.render_graph()

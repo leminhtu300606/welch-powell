@@ -179,7 +179,7 @@ class AppMethods:
             edge["line"] = self.canvas.create_line(cx1, cy1, cx2, cy2, fill=e_color, width=e_width)
 
             # ================= HIỂN THỊ WEIGHT =================
-            if "weight" in edge:
+            if edge.get("weight") is not None:
                 mx, my = (cx1 + cx2) / 2, (cy1 + cy2) / 2
 
                 self.canvas.create_rectangle(mx-10, my-10, mx+10, my+10, fill="white", outline="white")

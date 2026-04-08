@@ -47,3 +47,5 @@ welch-powell/
 ├── utils/                      
 │   └── file_manager.py         # Xử lý đọc/ghi file định dạng SVG + JSON nhúng
 └── main.py                     # Điểm khởi chạy ứng dụng (Entry point / Launcher)
+```
+## Donwload and Install: [.exe](https://transfer.it/t/QIs6tsxVyRBY)

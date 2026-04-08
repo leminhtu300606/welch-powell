@@ -5,6 +5,37 @@ from core.graph_actions import (
     connect_nodes, delete_edge, delete_node
 )
 
+
+def _ask_positive_weight_vi(parent, title, prompt, initialvalue=None):
+    """Nhập trọng số nguyên dương với thông báo lỗi tiếng Việt."""
+    while True:
+        raw_value = simpledialog.askstring(
+            title,
+            prompt,
+            initialvalue="" if initialvalue is None else str(initialvalue),
+            parent=parent,
+        )
+
+        if raw_value is None:
+            return None
+
+        raw_value = raw_value.strip()
+        if raw_value == "":
+            messagebox.showwarning("Lỗi nhập liệu", "Trọng số không được để trống.")
+            continue
+
+        try:
+            weight = int(raw_value)
+        except ValueError:
+            messagebox.showwarning("Lỗi nhập liệu", "Trọng số phải là số nguyên.")
+            continue
+
+        if weight < 1:
+            messagebox.showwarning("Lỗi nhập liệu", "Trọng số phải lớn hơn hoặc bằng 1.")
+            continue
+
+        return weight
+
 def _get_next_label(app):
     """Sinh nhãn A, B, C..."""
     existing_labels = {str(node["label"]).upper() for node in app.nodes}
@@ -35,7 +66,11 @@ def on_canvas_click(app, event):
         else:
             weight = None
             if getattr(app, "algorithm_mode", "") in ["dijkstra", "prim", "kruskal"]:
-                w_input = simpledialog.askinteger("Trọng số", f"Trọng số {first['label']} -> {selected_node['label']}:", minvalue=1, parent=app.root)
+                w_input = _ask_positive_weight_vi(
+                    app.root,
+                    "Nhập trọng số",
+                    f"Nhập trọng số cho cạnh {first['label']} - {selected_node['label']}:",
+                )
                 if w_input is None:
                     app._clear_connection_highlight()
                     return
@@ -55,7 +90,12 @@ def on_canvas_click(app, event):
         edge = app.get_edge_at(event.x, event.y)
         if edge:
             n1, n2 = app.nodes[edge["node1_id"]]["label"], app.nodes[edge["node2_id"]]["label"]
-            new_w = simpledialog.askinteger("Sửa trọng số", f"Trọng số mới ({n1} - {n2}):", initialvalue=edge.get("weight", 1), minvalue=1, parent=app.root)
+            new_w = _ask_positive_weight_vi(
+                app.root,
+                "Sửa trọng số",
+                f"Nhập trọng số mới cho cạnh {n1} - {n2}:",
+                initialvalue=edge.get("weight", 1),
+            )
             if new_w is not None:
                 edge["weight"] = new_w
                 app.render_graph()
@@ -79,23 +119,25 @@ def on_canvas_click(app, event):
             if not hasattr(app, "dijkstra_nodes"): app.dijkstra_nodes = []
             if selected_node in app.dijkstra_nodes: return
             if len(app.dijkstra_nodes) >= 2:
-                for node in app.dijkstra_nodes:
-                    app.canvas.itemconfig(node["circle"], outline="black", width=2)
                 app.dijkstra_nodes = []
             
             app.dijkstra_nodes.append(selected_node)
-            app.canvas.itemconfig(selected_node["circle"], outline="green", width=4)
+            app.render_graph()
             if len(app.dijkstra_nodes) == 2:
                 messagebox.showinfo("Thông báo", "Đã chọn xong điểm đầu và cuối.\nNhấn '> Tìm đường'")
         return
-    # ================= PRIM SELECT =================
+    # ================= PRIM SELECT EDGE =================
     if mode == "prim_select":
-        if selected_node:
-            if hasattr(app, "prim_start") and app.prim_start:
-                app.canvas.itemconfig(app.prim_start["circle"], outline="black", width=2)
+        edge = app.get_edge_at(event.x, event.y)
+        if not edge:
+            messagebox.showwarning("Thông báo", "Hãy click trực tiếp lên một cạnh để chọn cạnh bắt đầu.")
+            return
 
-            app.prim_start = selected_node
-            app.canvas.itemconfig(selected_node["circle"], outline="blue", width=4)
+        app.prim_start_edge = (edge["node1_id"], edge["node2_id"])
+        app.highlighted_path = []
+        app.highlighted_color = "#2980b9"
+        app.highlighted_edges = [edge]
+        app.render_graph()
         return
     
     if selected_node:

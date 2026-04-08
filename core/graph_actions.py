@@ -149,8 +149,8 @@ def run_dijkstra_algorithm(app, start_node, end_node):
 
 
 
-def run_prim_algorithm(app, start_node):
-    mst = prim(app.nodes, app.edges, start_node["id"])
+def run_prim_algorithm(app, start_edge=None):
+    mst = prim(app.nodes, app.edges, start_edge)
     if not mst:
         return None
 

@@ -40,11 +40,11 @@ def run_algorithm(app):
 
     # ================= PRIM =================
     elif app.algorithm_mode == "prim":
-        if not hasattr(app, "prim_start") or app.prim_start is None:
-            messagebox.showwarning("Lỗi", "Hãy chọn đỉnh bắt đầu (mode: prim_select)!")
+        if not app.edges:
+            messagebox.showwarning("Lỗi", "Đồ thị chưa có cạnh để chạy Prim.")
             return
 
-        run_prim_algorithm(app, app.prim_start)
+        run_prim_algorithm(app, getattr(app, "prim_start_edge", None))
         app.render_graph()
 
         messagebox.showinfo("Kết quả", "Đã tìm xong cây khung nhỏ nhất (Prim)")

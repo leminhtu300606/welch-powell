@@ -150,6 +150,14 @@ class AppMethods:
         h_edges_list = getattr(self, "highlighted_edges", [])
         h_color = getattr(self, "highlighted_color", "red")
 
+        dijkstra_role_by_node_id = {}
+        if getattr(self, "algorithm_mode", "") == "dijkstra":
+            for idx, selected_node in enumerate(getattr(self, "dijkstra_nodes", [])[:2]):
+                if selected_node is None:
+                    continue
+                role = "S" if idx == 0 else "T"
+                dijkstra_role_by_node_id[selected_node["id"]] = role
+
         # ================= EDGE SET =================
         # Dijkstra (path)
         path_edges = set()
@@ -197,8 +205,15 @@ class AppMethods:
             cx, cy = self._world_to_canvas(node["x"], node["y"])
             radius = node["radius"] * self.scale
 
-            outline_color = h_color if is_highlighted else "black"
-            outline_width = 4 if is_highlighted else 2
+            if is_highlighted:
+                outline_color = h_color
+                outline_width = 4
+            elif node["id"] in dijkstra_role_by_node_id:
+                outline_color = "#16a085" if dijkstra_role_by_node_id[node["id"]] == "S" else "#8e44ad"
+                outline_width = 4
+            else:
+                outline_color = "black"
+                outline_width = 2
 
             node["circle"] = self.canvas.create_oval(
                 cx - radius, cy - radius,
@@ -214,6 +229,30 @@ class AppMethods:
                 fill="black",
                 font=("Arial", 12, "bold")
             )
+
+            if node["id"] in dijkstra_role_by_node_id:
+                role = dijkstra_role_by_node_id[node["id"]]
+                badge_r = max(10, radius * 0.28)
+                badge_cx = cx + radius * 0.55
+                badge_cy = cy - radius * 0.55
+                badge_fill = "#16a085" if role == "S" else "#8e44ad"
+
+                self.canvas.create_oval(
+                    badge_cx - badge_r,
+                    badge_cy - badge_r,
+                    badge_cx + badge_r,
+                    badge_cy + badge_r,
+                    fill=badge_fill,
+                    outline="white",
+                    width=2,
+                )
+                self.canvas.create_text(
+                    badge_cx,
+                    badge_cy,
+                    text=role,
+                    fill="white",
+                    font=("Arial", 10, "bold"),
+                )
 
         if hasattr(self, "refresh_relationship_panel") and callable(self.refresh_relationship_panel):
             self.refresh_relationship_panel()

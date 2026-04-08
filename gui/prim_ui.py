@@ -36,11 +36,12 @@ def setup_prim_ui(app, add_tool_check, create_toolbar_button):
 
 
 def run_prim_animation(app):
-    if not hasattr(app, "prim_start") or app.prim_start is None:
-        messagebox.showwarning("Lỗi", "Hãy chọn đỉnh bắt đầu!")
+    if not app.edges:
+        messagebox.showwarning("Lỗi", "Đồ thị chưa có cạnh để chạy Prim.")
         return
 
-    mst_edges = run_prim_algorithm(app, app.prim_start)
+    selected_start_edge = getattr(app, "prim_start_edge", None)
+    mst_edges = run_prim_algorithm(app, selected_start_edge)
 
     if not mst_edges:
         messagebox.showerror("Lỗi", "Không tìm được cây khung (graph có thể không liên thông)")

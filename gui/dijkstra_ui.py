@@ -4,11 +4,10 @@ from tkinter import ttk, messagebox
 from algorithms.dijkstra import dijkstra_table_and_paths
 
 def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
-    add_tool_check(app, "Xóa nút", "delete")
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
     add_tool_check(app, "Sửa Tên Đỉnh", "edit_label") 
-    add_tool_check(app, "Xóa cạnh", "delete_edge")
+    add_tool_check(app, "Xóa", "delete")
     add_tool_check(app, "Chọn điểm", "dijkstra_select")
     
     app.run_btn = create_toolbar_button(app, "> Tìm đường", "#e67e22", lambda: run_dijkstra_animation(app))

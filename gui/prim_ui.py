@@ -7,10 +7,9 @@ from core.graph_actions import run_prim_algorithm
 def setup_prim_ui(app, add_tool_check, create_toolbar_button):
 
     # ===== TOOL =====
-    add_tool_check(app, "Xóa nút", "delete")
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
-    add_tool_check(app, "Xóa cạnh", "delete_edge")
+    add_tool_check(app, "Xóa", "delete")
     add_tool_check(app, "Chọn đỉnh bắt đầu", "prim_select")
 
     # ===== BUTTON RUN =====

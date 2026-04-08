@@ -7,10 +7,9 @@ from core.graph_actions import run_kruskal_algorithm
 def setup_kruskal_ui(app, add_tool_check, create_toolbar_button):
 
     # ===== TOOL =====
-    add_tool_check(app, "Xóa nút", "delete")
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
-    add_tool_check(app, "Xóa cạnh", "delete_edge")
+    add_tool_check(app, "Xóa", "delete")
 
     # ===== BUTTON RUN =====
     app.run_btn = create_toolbar_button(

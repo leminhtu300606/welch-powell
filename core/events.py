@@ -50,7 +50,10 @@ def on_canvas_click(app, event):
     app.selected_node = selected_node
 
     if mode == "delete":
+        edge = app.get_edge_at(event.x, event.y)
         if selected_node: delete_node(app, selected_node)
+        elif edge: delete_edge(app, edge)
+        else: messagebox.showwarning("Thông báo", "Không có cạnh tại đây!")
         return
 
     if mode == "connect":
@@ -92,9 +95,9 @@ def on_canvas_click(app, event):
         return
 
     if mode == "delete_edge":
-        edge = app.get_edge_at(event.x, event.y)
-        if edge: delete_edge(app, edge)
-        else: messagebox.showwarning("Thông báo", "Không có cạnh tại đây!")
+        # edge = app.get_edge_at(event.x, event.y)
+        # if edge: delete_edge(app, edge)
+        # else: messagebox.showwarning("Thông báo", "Không có cạnh tại đây!")
         return
 
     if mode == "edit_weight":

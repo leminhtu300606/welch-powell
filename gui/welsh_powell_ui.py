@@ -4,10 +4,8 @@ from tkinter import messagebox
 from core.graph_actions import apply_welsh_powell_coloring
 
 def setup_welsh_powell_ui(app, add_tool_check, create_toolbar_button):
-    add_tool_check(app, "Xóa nút", "delete")
     add_tool_check(app, "Nối nút", "connect")
-    add_tool_check(app, "Xóa cạnh", "delete_edge")
-    
+    add_tool_check(app, "Xóa", "delete")
     app.run_btn = create_toolbar_button(app, "> Tô màu", "#27ae60", lambda: run_coloring(app))
     
     # 1. Dọn dẹp các khung cũ (nếu có do file ui.py gọi nhầm)

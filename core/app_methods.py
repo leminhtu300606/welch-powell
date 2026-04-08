@@ -1,6 +1,7 @@
 """core/app_methods.py - Chứa trạng thái ứng dụng và các phương thức vẽ/zoom đồ thị."""
 
 import math
+import tkinter as tk
 
 class AppMethods:
     def init_state(self):
@@ -100,7 +101,6 @@ class AppMethods:
         tol_sq = (tolerance / self.scale) ** 2
         for edge in self.edges:
             n1, n2 = self.nodes[edge["node1_id"]], self.nodes[edge["node2_id"]]
-            # Tính khoảng cách từ điểm click đến đoạn thẳng nối n1 và n2
             if self._distance_point_to_segment(wx, wy, n1["x"], n1["y"], n2["x"], n2["y"]) ** 2 <= tol_sq:
                 return edge
         return None
@@ -115,6 +115,9 @@ class AppMethods:
         h_path = getattr(self, "highlighted_path", [])
         h_edges_list = getattr(self, "highlighted_edges", [])
         h_color = getattr(self, "highlighted_color", "red")
+        
+        # KIỂM TRA ĐỒ THỊ CÓ HƯỚNG
+        is_directed = getattr(self, "is_directed", None) is not None and self.is_directed.get()
 
         dijkstra_role_by_node_id = {}
         if getattr(self, "algorithm_mode", "") == "dijkstra":
@@ -125,12 +128,16 @@ class AppMethods:
                 dijkstra_role_by_node_id[selected_node["id"]] = role
 
         # ================= EDGE SET =================
-        # Dijkstra (path)
+        # Dijkstra (path) - Tính theo có hướng hoặc vô hướng
         path_edges = set()
         for i in range(len(h_path) - 1):
-            path_edges.add((min(h_path[i], h_path[i+1]), max(h_path[i], h_path[i+1])))
+            u, v = h_path[i], h_path[i+1]
+            if is_directed:
+                path_edges.add((u, v))
+            else:
+                path_edges.add((min(u, v), max(u, v)))
 
-        # Prim/Kruskal (edge list)
+        # Prim/Kruskal (edge list) - Luôn vô hướng
         mst_edges = set()
         for e in h_edges_list:
             mst_edges.add((min(e["node1_id"], e["node2_id"]), max(e["node1_id"], e["node2_id"])))
@@ -143,14 +150,34 @@ class AppMethods:
             cx1, cy1 = self._world_to_canvas(n1["x"], n1["y"])
             cx2, cy2 = self._world_to_canvas(n2["x"], n2["y"])
 
-            edge_pair = (min(edge["node1_id"], edge["node2_id"]), max(edge["node1_id"], edge["node2_id"]))
+            u, v = edge["node1_id"], edge["node2_id"]
 
-            is_highlighted = edge_pair in path_edges or edge_pair in mst_edges
+            if is_directed:
+                is_path_highlighted = (u, v) in path_edges
+            else:
+                is_path_highlighted = (min(u, v), max(u, v)) in path_edges
+
+            is_mst_highlighted = (min(u, v), max(u, v)) in mst_edges
+            is_highlighted = is_path_highlighted or is_mst_highlighted
 
             e_color = h_color if is_highlighted else "gray"
             e_width = 4 if is_highlighted else 2
 
-            edge["line"] = self.canvas.create_line(cx1, cy1, cx2, cy2, fill=e_color, width=e_width)
+            # Vẽ cạnh có mũi tên nếu là đồ thị có hướng
+            if is_directed:
+                angle = math.atan2(cy2 - cy1, cx2 - cx1)
+                radius_stop = (n2["radius"] * self.scale) + 2
+                
+                end_x = cx2 - radius_stop * math.cos(angle)
+                end_y = cy2 - radius_stop * math.sin(angle)
+                
+                edge["line"] = self.canvas.create_line(
+                    cx1, cy1, end_x, end_y, 
+                    fill=e_color, width=e_width, 
+                    tags="edge", arrow=tk.LAST, arrowshape=(15, 20, 5)
+                )
+            else:
+                edge["line"] = self.canvas.create_line(cx1, cy1, cx2, cy2, fill=e_color, width=e_width)
 
             # ================= HIỂN THỊ WEIGHT =================
             if edge.get("weight") is not None:

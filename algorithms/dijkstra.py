@@ -1,6 +1,6 @@
 """algorithms/dijkstra.py - Chạy thuật toán Dijkstra, xuất bảng vết và đa đường đi."""
 
-def dijkstra_table_and_paths(nodes, edges, start_id, end_id):
+def dijkstra_table_and_paths(nodes, edges, start_id, end_id, is_directed=False):
     node_count = len(nodes)
     if node_count == 0: return None, [], float('inf')
     
@@ -8,7 +8,9 @@ def dijkstra_table_and_paths(nodes, edges, start_id, end_id):
     for edge in edges:
         u, v, w = edge["node1_id"], edge["node2_id"], edge.get("weight", 1)
         adj[u].append((v, w))
-        adj[v].append((u, w))
+        # Nếu là đồ thị vô hướng, thêm chiều ngược lại v -> u
+        if not is_directed:
+            adj[v].append((u, w))
 
     distances = {i: float('inf') for i in range(node_count)}
     predecessors = {i: [] for i in range(node_count)}
@@ -23,7 +25,6 @@ def dijkstra_table_and_paths(nodes, edges, start_id, end_id):
         if distances[current] == float('inf'): break
         unvisited.remove(current)
 
-        # Trả về dữ liệu trạng thái thô để UI tự build text
         row_data = {"finalized_node": current, "states": {}}
         for i in range(node_count):
             if i in finalized:

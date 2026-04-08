@@ -13,7 +13,6 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Sửa Tên Đỉnh", "edit_label") 
     add_tool_check(app, "Xóa cạnh", "delete_edge")
     add_tool_check(app, "Chọn điểm", "dijkstra_select")
-    add_tool_check(app, "Chọn start (Prim)", "prim_select")
     app.run_btn = create_toolbar_button(
     app,
     "> Chạy",

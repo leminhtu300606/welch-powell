@@ -11,7 +11,7 @@ def setup_prim_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
     add_tool_check(app, "Xóa cạnh", "delete_edge")
-    add_tool_check(app, "Chọn start (Prim)", "prim_select")
+    add_tool_check(app, "Chọn cây khung", "prim_select")
 
     # ===== BUTTON RUN =====
     app.run_btn = create_toolbar_button(

@@ -155,7 +155,7 @@ class AppMethods:
             for idx, selected_node in enumerate(getattr(self, "dijkstra_nodes", [])[:2]):
                 if selected_node is None:
                     continue
-                role = "S" if idx == 0 else "T"
+                role = "BĐ" if idx == 0 else "KT"
                 dijkstra_role_by_node_id[selected_node["id"]] = role
 
         # ================= EDGE SET =================
@@ -209,7 +209,7 @@ class AppMethods:
                 outline_color = h_color
                 outline_width = 4
             elif node["id"] in dijkstra_role_by_node_id:
-                outline_color = "#16a085" if dijkstra_role_by_node_id[node["id"]] == "S" else "#8e44ad"
+                outline_color = "#16a085" if dijkstra_role_by_node_id[node["id"]] == "BĐ" else "#8e44ad"
                 outline_width = 4
             else:
                 outline_color = "black"
@@ -235,7 +235,7 @@ class AppMethods:
                 badge_r = max(10, radius * 0.28)
                 badge_cx = cx + radius * 0.55
                 badge_cy = cy - radius * 0.55
-                badge_fill = "#16a085" if role == "S" else "#8e44ad"
+                badge_fill = "#16a085" if role == "BĐ" else "#8e44ad"
 
                 self.canvas.create_oval(
                     badge_cx - badge_r,

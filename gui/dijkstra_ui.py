@@ -12,7 +12,7 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
     add_tool_check(app, "Sửa Tên Đỉnh", "edit_label") 
     add_tool_check(app, "Xóa cạnh", "delete_edge")
-    add_tool_check(app, "Chọn điểm", "dijkstra_select")
+    add_tool_check(app, "Chọn điểm khởi tạo", "dijkstra_select")
     app.run_btn = create_toolbar_button(
     app,
     "> Chạy",
@@ -59,7 +59,12 @@ def run_algorithm(app):
         return
 
 def run_dijkstra_animation(app):
-    if not hasattr(app, "dijkstra_nodes") or len(app.dijkstra_nodes) != 2:
+    if (
+        not hasattr(app, "dijkstra_nodes")
+        or len(app.dijkstra_nodes) != 2
+        or app.dijkstra_nodes[0] is None
+        or app.dijkstra_nodes[1] is None
+    ):
         messagebox.showinfo("Hướng dẫn", "Hãy chọn đúng 2 nút (Đầu & Cuối) bằng công cụ 'Chọn điểm'.")
         return
 

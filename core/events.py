@@ -116,14 +116,28 @@ def on_canvas_click(app, event):
 
     if mode == "dijkstra_select":
         if selected_node:
-            if not hasattr(app, "dijkstra_nodes"): app.dijkstra_nodes = []
-            if selected_node in app.dijkstra_nodes: return
-            if len(app.dijkstra_nodes) >= 2:
-                app.dijkstra_nodes = []
-            
-            app.dijkstra_nodes.append(selected_node)
+            if not hasattr(app, "dijkstra_nodes") or len(app.dijkstra_nodes) != 2:
+                app.dijkstra_nodes = [None, None]
+
+            selected_id = selected_node["id"]
+
+            # Click lại vào điểm đã chọn để hủy chọn điểm đó.
+            for idx, chosen_node in enumerate(app.dijkstra_nodes):
+                if chosen_node is not None and chosen_node["id"] == selected_id:
+                    app.dijkstra_nodes[idx] = None
+                    app.render_graph()
+                    return
+
+            if app.dijkstra_nodes[0] is None:
+                app.dijkstra_nodes[0] = selected_node
+            elif app.dijkstra_nodes[1] is None:
+                app.dijkstra_nodes[1] = selected_node
+            else:
+                # Nếu đã đủ 2 điểm, chọn điểm mới sẽ bắt đầu lại từ điểm đầu.
+                app.dijkstra_nodes = [selected_node, None]
+
             app.render_graph()
-            if len(app.dijkstra_nodes) == 2:
+            if app.dijkstra_nodes[0] is not None and app.dijkstra_nodes[1] is not None:
                 messagebox.showinfo("Thông báo", "Đã chọn xong điểm đầu và cuối.\nNhấn '> Tìm đường'")
         return
     # ================= PRIM SELECT EDGE =================

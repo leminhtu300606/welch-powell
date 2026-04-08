@@ -5,6 +5,26 @@ from algorithms.dijkstra import dijkstra_table_and_paths
 from core.graph_actions import run_prim_algorithm, run_kruskal_algorithm
 
 
+def _set_dijkstra_notice(app, text, color="#2c3e50"):
+    if hasattr(app, "dijkstra_notice_var"):
+        app.dijkstra_notice_var.set(text)
+    if hasattr(app, "dijkstra_notice_label"):
+        app.dijkstra_notice_label.config(fg=color)
+
+
+def _sync_dijkstra_select_mode(app):
+    if not hasattr(app, "mode_var"):
+        return
+    app.mode_var.set("dijkstra_select")
+    if hasattr(app, "tool_vars"):
+        for mode_name, var in app.tool_vars.items():
+            var.set(mode_name == "dijkstra_select")
+    if hasattr(app, "tool_checks"):
+        for mode_name, check in app.tool_checks.items():
+            bg = "#1f618d" if mode_name == "dijkstra_select" else "#2c3e50"
+            check.config(bg=bg, selectcolor=bg if mode_name == "dijkstra_select" else "#34495e")
+
+
 def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     
     add_tool_check(app, "Xóa nút", "delete")
@@ -12,7 +32,6 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Sửa Trọng Số", "edit_weight")
     add_tool_check(app, "Sửa Tên Đỉnh", "edit_label") 
     add_tool_check(app, "Xóa cạnh", "delete_edge")
-    add_tool_check(app, "Chọn điểm khởi tạo", "dijkstra_select")
     app.run_btn = create_toolbar_button(
     app,
     "> Chạy",
@@ -23,6 +42,18 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     for widget in app.info_frame.winfo_children(): widget.destroy()
 
     tk.Label(app.info_frame, text="Bảng chạy Dijkstra", font=("Arial", 10, "bold"), bg="#ecf0f1").pack(pady=(10,5))
+
+    app.dijkstra_notice_var = tk.StringVar(value="Nhấn '> Chạy' để bắt đầu chọn điểm BĐ và KT.")
+    app.dijkstra_notice_label = tk.Label(
+        app.info_frame,
+        textvariable=app.dijkstra_notice_var,
+        font=("Arial", 9, "bold"),
+        bg="#ecf0f1",
+        fg="#2c3e50",
+        wraplength=250,
+        justify="left",
+    )
+    app.dijkstra_notice_label.pack(fill="x", padx=8, pady=(0, 6))
     
     app.tree = ttk.Treeview(app.info_frame, show='headings', height=20)
     app.tree.pack(fill="both", expand=True, padx=5, pady=5)
@@ -65,8 +96,11 @@ def run_dijkstra_animation(app):
         or app.dijkstra_nodes[0] is None
         or app.dijkstra_nodes[1] is None
     ):
-        messagebox.showinfo("Hướng dẫn", "Hãy chọn đúng 2 nút (Đầu & Cuối) bằng công cụ 'Chọn điểm'.")
+        _sync_dijkstra_select_mode(app)
+        _set_dijkstra_notice(app, "Chọn điểm bắt đầu (BĐ) và điểm kết thúc (KT), sau đó nhấn '> Chạy' lần nữa.", "#c0392b")
         return
+
+    _set_dijkstra_notice(app, "Đang chạy thuật toán Dijkstra...", "#2c3e50")
 
     start_id, end_id = app.dijkstra_nodes[0]["id"], app.dijkstra_nodes[1]["id"]
     history_table, all_paths, min_dist = dijkstra_table_and_paths(app.nodes, app.edges, start_id, end_id)
@@ -134,6 +168,7 @@ def run_dijkstra_animation(app):
         else:
             app.run_btn.config(state="normal")
             app.dijkstra_nodes = []
+            _set_dijkstra_notice(app, "Nhấn '> Chạy' để chọn lại điểm BĐ/KT cho lần chạy tiếp theo.", "#2c3e50")
             for widget in app.result_frame.winfo_children(): widget.destroy()
             
             if not all_paths:

@@ -125,6 +125,10 @@ def on_canvas_click(app, event):
             for idx, chosen_node in enumerate(app.dijkstra_nodes):
                 if chosen_node is not None and chosen_node["id"] == selected_id:
                     app.dijkstra_nodes[idx] = None
+                    if hasattr(app, "dijkstra_notice_var"):
+                        app.dijkstra_notice_var.set("Đã hủy chọn. Hãy chọn lại điểm BĐ và KT rồi nhấn '> Chạy'.")
+                    if hasattr(app, "dijkstra_notice_label"):
+                        app.dijkstra_notice_label.config(fg="#c0392b")
                     app.render_graph()
                     return
 
@@ -138,7 +142,21 @@ def on_canvas_click(app, event):
 
             app.render_graph()
             if app.dijkstra_nodes[0] is not None and app.dijkstra_nodes[1] is not None:
+                if hasattr(app, "dijkstra_notice_var"):
+                    app.dijkstra_notice_var.set("Đã chọn đủ BĐ và KT. Nhấn '> Chạy' để bắt đầu xử lý.")
+                if hasattr(app, "dijkstra_notice_label"):
+                    app.dijkstra_notice_label.config(fg="#27ae60")
                 messagebox.showinfo("Thông báo", "Đã chọn xong điểm đầu và cuối.\nNhấn '> Tìm đường'")
+            elif app.dijkstra_nodes[0] is not None:
+                if hasattr(app, "dijkstra_notice_var"):
+                    app.dijkstra_notice_var.set("Đã chọn BĐ. Hãy chọn thêm điểm KT.")
+                if hasattr(app, "dijkstra_notice_label"):
+                    app.dijkstra_notice_label.config(fg="#2c3e50")
+            else:
+                if hasattr(app, "dijkstra_notice_var"):
+                    app.dijkstra_notice_var.set("Hãy chọn điểm BĐ.")
+                if hasattr(app, "dijkstra_notice_label"):
+                    app.dijkstra_notice_label.config(fg="#2c3e50")
         return
     # ================= PRIM SELECT EDGE =================
     if mode == "prim_select":

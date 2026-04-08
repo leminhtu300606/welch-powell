@@ -171,7 +171,7 @@ def setup_interface(app):
     create_toolbar_button(app, "Mới", "#54b5e6" ,lambda: create_new_graph(app),height=1).pack(pady=2)
     create_toolbar_button(app, "Mở", "#9b59b6", lambda: load_graph_from_file(app), height=1).pack(pady=2)
     create_toolbar_button(app, "Lưu", "#e74c3c", lambda: save_graph_to_file(app), height=1).pack(pady=2)
-    create_toolbar_button(app, "Save as...", "#ee2748", lambda: save_graph_as(app), height=1).pack(pady=2)
+    # Đây là một tính năng ẩn: create_toolbar_button(app, "Save as...", "#ee2748", lambda: save_graph_as(app), height=1).pack(pady=2)
     app.root.bind("<Control-n>", lambda event: create_new_graph(app))
     app.root.bind("<Control-o>", lambda event: load_graph_from_file(app))
     app.root.bind("<Control-s>", lambda event: save_graph_to_file(app))

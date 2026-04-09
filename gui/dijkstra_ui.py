@@ -40,7 +40,7 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
 
     # Nút Bật/Tắt hiển thị giá trị cũ cho đỉnh mang nhãn "-"
     if not hasattr(app, "show_done_labels"):
-        app.show_done_labels = tk.BooleanVar(value=False)
+        app.show_done_labels = tk.BooleanVar(value=True)
 
     tk.Checkbutton(
         app.info_frame, text="Giữ lại giá trị cho đỉnh đã chốt (-)", 

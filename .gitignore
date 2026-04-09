@@ -5,3 +5,4 @@ build/
 dist/
 .gitignore
 logo/
+setupKMAGraphViz.exe

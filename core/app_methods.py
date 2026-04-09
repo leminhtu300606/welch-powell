@@ -184,7 +184,7 @@ class AppMethods:
                     mx, my,
                     text=str(edge["weight"]),
                     fill="#c0392b",
-                    font=("Arial", 10, "bold")
+                    font=("Arial", 13, "bold")
                 )
 
         # ================= DRAW NODES =================
@@ -227,7 +227,7 @@ class AppMethods:
                 cx, cy,
                 text=node["label"],
                 fill="black",
-                font=("Arial", 12, "bold")
+                font=("Arial", 20, "bold")
             )
 
             if node["id"] in dijkstra_role_by_node_id:
@@ -310,7 +310,7 @@ class AppMethods:
                     if lbl_text:
                         lbl_x = cx
                         lbl_y = cy - radius - 18 * self.scale
-                        font_size = max(8, int(10 * self.scale))
+                        font_size = max(13, int(10 * self.scale))
                         
                         t_id = self.canvas.create_text(lbl_x, lbl_y, text=lbl_text, fill="#2c3e50", font=("Arial", font_size, "bold"))
                         bbox = self.canvas.bbox(t_id)

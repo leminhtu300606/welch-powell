@@ -6,4 +6,4 @@ dist/
 .gitignore
 logo/
 setupKMAGraphViz.exe
-.vscode\
+.vscode/

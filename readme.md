@@ -54,4 +54,4 @@ welch-powell/
 │   └── file_manager.py         # Xử lý đọc/ghi file định dạng SVG + JSON nhúng
 └── main.py                     # Điểm khởi chạy ứng dụng (Entry point / Launcher)
 ```
-## Donwload and Install: [.exe](https://www.mediafire.com/file/w5rviphzw1kliyt/setupKMAGraphViz.exe/file)
+## Donwload and Install: [.exe](https://www.mediafire.com/file/a42fqpew0tvve98/setupKMAGraphViz.exe/file)

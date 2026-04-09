@@ -128,7 +128,6 @@ class AppMethods:
                 dijkstra_role_by_node_id[selected_node["id"]] = role
 
         # ================= EDGE SET =================
-        # Dijkstra (path) - Tính theo có hướng hoặc vô hướng
         path_edges = set()
         for i in range(len(h_path) - 1):
             u, v = h_path[i], h_path[i+1]
@@ -137,7 +136,6 @@ class AppMethods:
             else:
                 path_edges.add((min(u, v), max(u, v)))
 
-        # Prim/Kruskal (edge list) - Luôn vô hướng
         mst_edges = set()
         for e in h_edges_list:
             mst_edges.add((min(e["node1_id"], e["node2_id"]), max(e["node1_id"], e["node2_id"])))
@@ -163,7 +161,6 @@ class AppMethods:
             e_color = h_color if is_highlighted else "gray"
             e_width = 4 if is_highlighted else 2
 
-            # Vẽ cạnh có mũi tên nếu là đồ thị có hướng
             if is_directed:
                 angle = math.atan2(cy2 - cy1, cx2 - cx1)
                 radius_stop = (n2["radius"] * self.scale) + 2
@@ -179,10 +176,9 @@ class AppMethods:
             else:
                 edge["line"] = self.canvas.create_line(cx1, cy1, cx2, cy2, fill=e_color, width=e_width)
 
-            # ================= HIỂN THỊ WEIGHT =================
+            # HIỂN THỊ TRỌNG SỐ
             if edge.get("weight") is not None:
                 mx, my = (cx1 + cx2) / 2, (cy1 + cy2) / 2
-
                 self.canvas.create_rectangle(mx-10, my-10, mx+10, my+10, fill="white", outline="white")
                 self.canvas.create_text(
                     mx, my,
@@ -193,6 +189,8 @@ class AppMethods:
 
         # ================= DRAW NODES =================
         prim_start_vertex = getattr(self, "prim_start_vertex", None)
+        current_row = getattr(self, "current_dijkstra_row", None)
+        path_pred = getattr(self, "current_path_pred", {})
         
         for node in self.nodes:
             is_highlighted = node["id"] in h_path
@@ -200,7 +198,11 @@ class AppMethods:
             cx, cy = self._world_to_canvas(node["x"], node["y"])
             radius = node["radius"] * self.scale
 
-            if is_highlighted:
+            # Đổi màu viền
+            if getattr(self, "algorithm_mode", "") == "dijkstra" and current_row and current_row.get("finalized_node") == node["id"]:
+                outline_color = "#f39c12"
+                outline_width = 4
+            elif is_highlighted:
                 outline_color = h_color
                 outline_width = 4
             elif node["id"] == prim_start_vertex:
@@ -251,6 +253,71 @@ class AppMethods:
                     fill="white",
                     font=("Arial", 10, "bold"),
                 )
+
+            # ================= VẼ NHÃN DIJKSTRA NỔI (Floating Labels) =================
+            show_labels_var = getattr(self, "show_floating_labels", None)
+            is_show_labels = show_labels_var.get() if show_labels_var else True
+
+            show_done_var = getattr(self, "show_done_labels", None)
+            is_show_done = show_done_var.get() if show_done_var else False
+
+            if getattr(self, "algorithm_mode", "") == "dijkstra" and current_row and is_show_labels:
+                state = current_row["states"].get(node["id"])
+                if state:
+                    lbl_text = ""
+                    bg_color = "#ecf0f1"
+                    
+                    if state["status"] == "done":
+                        if is_show_done:
+                            history = getattr(self, "dijkstra_history_table", [])
+                            for r in history:
+                                if r["finalized_node"] == node["id"]:
+                                    old_state = r["states"][node["id"]]
+                                    dist = old_state["dist"]
+                                    preds = old_state["preds"]
+                                    
+                                    p = None
+                                    if node["id"] in path_pred and path_pred[node["id"]] in preds:
+                                        p = path_pred[node["id"]]
+                                    elif preds:
+                                        p = preds[0]
+                                        
+                                    p_label = self.nodes[p]["label"] if p is not None else "-"
+                                    lbl_text = "0" if (dist == 0 and not preds) else f"({dist}, {p_label})"
+                                    bg_color = "#bdc3c7"
+                                    break
+                        else:
+                            lbl_text = "-"
+                            bg_color = "#bdc3c7"
+                    else:
+                        dist = state["dist"]
+                        preds = state["preds"]
+                        if dist == float('inf'):
+                            lbl_text = "(∞, -)"
+                        else:
+                            p = None
+                            if node["id"] in path_pred and path_pred[node["id"]] in preds:
+                                p = path_pred[node["id"]]
+                            elif preds:
+                                p = preds[0]
+                            p_label = self.nodes[p]["label"] if p is not None else "-"
+                            lbl_text = "0" if (dist == 0 and not preds) else f"({dist}, {p_label})"
+                            
+                            if state["status"] == "finalizing":
+                                lbl_text += "*"
+                                bg_color = "#f1c40f"
+
+                    if lbl_text:
+                        lbl_x = cx
+                        lbl_y = cy - radius - 18 * self.scale
+                        font_size = max(8, int(10 * self.scale))
+                        
+                        t_id = self.canvas.create_text(lbl_x, lbl_y, text=lbl_text, fill="#2c3e50", font=("Arial", font_size, "bold"))
+                        bbox = self.canvas.bbox(t_id)
+                        
+                        if bbox:
+                            rect_id = self.canvas.create_rectangle(bbox[0]-4, bbox[1]-2, bbox[2]+4, bbox[3]+2, fill=bg_color, outline="#7f8c8d")
+                            self.canvas.tag_lower(rect_id, t_id)
 
         if hasattr(self, "refresh_relationship_panel") and callable(self.refresh_relationship_panel):
             self.refresh_relationship_panel()

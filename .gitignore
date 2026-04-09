@@ -4,3 +4,4 @@ main.spec
 build/
 dist/
 .gitignore
+logo/

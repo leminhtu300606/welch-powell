@@ -14,7 +14,6 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     
     for widget in app.info_frame.winfo_children(): widget.destroy()
 
-    # --- KHUNG TÙY CHỌN ĐỒ THỊ CÓ HƯỚNG ---
     if not hasattr(app, "is_directed"):
         app.is_directed = tk.BooleanVar(value=False)
     
@@ -29,13 +28,33 @@ def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     app.tree = ttk.Treeview(app.info_frame, show='headings', height=20)
     app.tree.pack(fill="both", expand=True, padx=5, pady=5)
 
+    # Nút Bật/Tắt nhãn nổi
+    if not hasattr(app, "show_floating_labels"):
+        app.show_floating_labels = tk.BooleanVar(value=True)
+
+    tk.Checkbutton(
+        app.info_frame, text="Hiển thị nhãn giá trị trên đồ thị", 
+        variable=app.show_floating_labels, bg="#ecf0f1", font=("Arial",9, "bold"), 
+        fg="#d35400", cursor="hand2", command=app.render_graph
+    ).pack(anchor="w", padx=5, pady=(0, 2))
+
+    # Nút Bật/Tắt hiển thị giá trị cũ cho đỉnh mang nhãn "-"
+    if not hasattr(app, "show_done_labels"):
+        app.show_done_labels = tk.BooleanVar(value=False)
+
+    tk.Checkbutton(
+        app.info_frame, text="Giữ lại giá trị cho đỉnh đã chốt (-)", 
+        variable=app.show_done_labels, bg="#ecf0f1", font=("Arial", 10, "italic bold"), 
+        fg="#5825e3", cursor="hand2", command=app.render_graph
+    ).pack(anchor="w", padx=5, pady=(0, 5))
+
     app.result_frame = tk.Frame(app.info_frame, bg="#ecf0f1")
     app.result_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
 
 def run_dijkstra_animation(app):
-    if not hasattr(app, "dijkstra_nodes") or len(app.dijkstra_nodes) != 2:
-        messagebox.showinfo("Hướng dẫn", "Hãy chọn đúng 2 nút (Đầu & Cuối) bằng công cụ 'Chọn điểm'.")
+    if not hasattr(app, "dijkstra_nodes") or len(app.dijkstra_nodes) != 2 or app.dijkstra_nodes[0] is None or app.dijkstra_nodes[1] is None:
+        messagebox.showinfo("Hướng dẫn", "Vui lòng chọn đầy đủ 2 đỉnh (Bắt Đầu & Kết Thúc) bằng công cụ 'Chọn điểm' trước khi tìm đường.")
         return
 
     for item in app.tree.get_children(): app.tree.delete(item)
@@ -47,9 +66,11 @@ def run_dijkstra_animation(app):
 
     start_id, end_id = app.dijkstra_nodes[0]["id"], app.dijkstra_nodes[1]["id"]
     
-    # Truyền trạng thái Có Hướng/Vô hướng vào thuật toán
     is_directed_graph = app.is_directed.get()
     history_table, all_paths, min_dist = dijkstra_table_and_paths(app.nodes, app.edges, start_id, end_id, is_directed_graph)
+
+    # TRUYỀN LỊCH SỬ VÀO APP ĐỂ CANVAS CÓ THỂ LỤC LẠI GIÁ TRỊ CŨ CỦA NHÃN "-"
+    app.dijkstra_history_table = history_table
 
     other_nodes = [n for n in app.nodes if n["id"] not in (start_id, end_id)]
     other_nodes.sort(key=lambda n: str(n["label"]))
@@ -88,17 +109,65 @@ def run_dijkstra_animation(app):
     current_path_pred = {}
     if all_paths:
         current_path_pred = {v: u for u, v in zip(all_paths[0][:-1], all_paths[0][1:])}
+
+    # --- XÂY DỰNG TỪ ĐIỂN VẾT (TRACE-BACK) ---
+    full_preds = {}
+    for row in history_table:
+        u = row["finalized_node"]
+        state = row["states"].get(u)
+        if state and state.get("preds"):
+            full_preds[u] = state["preds"][0]
+
+    def get_path_to_node(target_id):
+        path = []
+        curr = target_id
+        visited = set()
+        while curr is not None and curr not in visited:
+            path.append(curr)
+            visited.add(curr)
+            curr = full_preds.get(curr)
+        path.reverse()
+        return path
     
+    # ================= TƯƠNG TÁC: CLICK VÀO BẢNG ĐỂ CẬP NHẬT ĐƯỜNG ĐI ĐỎ =================
+    def on_tree_click(event):
+        if app.run_btn["state"] == "disabled": return
+        selected_items = app.tree.selection()
+        if not selected_items: return
+            
+        idx = app.tree.index(selected_items[0])
+        if idx < len(history_table):
+            row_data = history_table[idx]
+            app.current_dijkstra_row = row_data
+
+            finalized_node = row_data["finalized_node"]
+            app.highlighted_path = get_path_to_node(finalized_node)
+            app.highlighted_color = "red"
+            
+            app.render_graph()
+
+    app.tree.bind("<ButtonRelease-1>", on_tree_click)
+
     def animate_table(idx=0):
         if idx < len(history_table):
             row_data = history_table[idx]
-            final_node = app.nodes[row_data["finalized_node"]]
-            app.canvas.itemconfig(final_node["circle"], outline="yellow", width=4)
+            
+            app.current_dijkstra_row = row_data
+            app.current_path_pred = current_path_pred
+            
+            finalized_node = row_data["finalized_node"]
+            app.highlighted_path = get_path_to_node(finalized_node)
+            app.highlighted_color = "red"
+            
+            app.render_graph()
             
             app.tree.insert('', tk.END, values=format_row(row_data, current_path_pred))
             app.tree.yview_moveto(1)
             app.root.after(delay_ms, lambda: animate_table(idx + 1))
         else:
+            app.current_dijkstra_row = None
+            app.render_graph()
+
             app.run_btn.config(state="normal")
             app.dijkstra_nodes = []
             
@@ -117,6 +186,8 @@ def run_dijkstra_animation(app):
                     for item in app.tree.get_children(): app.tree.delete(item)
                     for row_data in history_table:
                         app.tree.insert('', tk.END, values=format_row(row_data, path_pred))
+                    
+                    app.current_dijkstra_row = None
                     
                     if animate:
                         app.highlighted_color = color

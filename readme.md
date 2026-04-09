@@ -1,4 +1,4 @@
-# Ứng Dụng Mô Phỏng Thuật Toán Đồ Thị (GAS - Graph Algorithms Simulator)
+# Ứng Dụng Mô Phỏng Thuật Toán Đồ Thị (KMA GraphViz - Graph Algorithms Simulator)
 
 ![Python](https://img.shields.io/badge/Python-3.x-3776AB.svg?style=flat-square&logo=python&logoColor=white)
 ![GUI](https://img.shields.io/badge/GUI-Tkinter-E38B29.svg?style=flat-square)
@@ -54,4 +54,4 @@ welch-powell/
 │   └── file_manager.py         # Xử lý đọc/ghi file định dạng SVG + JSON nhúng
 └── main.py                     # Điểm khởi chạy ứng dụng (Entry point / Launcher)
 ```
-## Donwload and Install: [.exe](https://transfer.it/t/R9FuIo5XzbLI)
+## Donwload and Install: [.exe](https://www.mediafire.com/file/w5rviphzw1kliyt/setupKMAGraphViz.exe/file)

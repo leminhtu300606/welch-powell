@@ -122,10 +122,21 @@ def run_dijkstra_animation(app):
         path = []
         curr = target_id
         visited = set()
+        
+        # Lấy từ điển vết của "Cách" đang được chọn hiện tại
+        active_path_pred = getattr(app, "current_path_pred", {})
+
         while curr is not None and curr not in visited:
             path.append(curr)
             visited.add(curr)
-            curr = full_preds.get(curr)
+            
+            # Ưu tiên đi ngược theo Cách đang chọn. 
+            # Nếu đỉnh không thuộc nhánh của Cách đó, lấy vết mặc định.
+            if curr in active_path_pred:
+                curr = active_path_pred[curr]
+            else:
+                curr = full_preds.get(curr)
+                
         path.reverse()
         return path
     
@@ -182,6 +193,9 @@ def run_dijkstra_animation(app):
                     path = all_paths[path_index]
                     color = colors[path_index % len(colors)]
                     path_pred = {v: u for u, v in zip(path[:-1], path[1:])}
+                    
+                    # BỔ SUNG DÒNG NÀY: Cập nhật vết đang chọn vào app
+                    app.current_path_pred = path_pred 
                     
                     for item in app.tree.get_children(): app.tree.delete(item)
                     for row_data in history_table:

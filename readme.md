@@ -45,6 +45,7 @@ welch-powell/
 │   ├── events.py               # Bắt sự kiện click, kéo thả chuột, con lăn zoom
 │   └── graph_actions.py        # Các thao tác CRUD (Thêm/Sửa/Xóa) đỉnh và cạnh
 ├── gui/                        
+│   ├── animation_utils.py      # Trợ giúp điều khiển nhịp chạy mô phỏng
 │   ├── dijkstra_ui.py          # Giao diện và bảng điều khiển cho Dijkstra
 │   ├── kruskal_ui.py           # Giao diện và bảng điều khiển cho Kruskal
 │   ├── prim_ui.py              # Giao diện và bảng điều khiển cho Prim

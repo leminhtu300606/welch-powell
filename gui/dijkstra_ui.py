@@ -204,18 +204,10 @@ def run_dijkstra_animation(app):
                     
                     app.current_dijkstra_row = None
                     
-                    if animate:
-                        app.highlighted_color = color
-                        def draw_segment(step=0):
-                            if step < len(path):
-                                app.highlighted_path = path[:step+1]
-                                app.render_graph()
-                                schedule_animation_step(app, lambda: draw_segment(step + 1))
-                        draw_segment(0)
-                    else:
-                        app.highlighted_path = path
-                        app.highlighted_color = color
-                        app.render_graph()
+                    # TÔ LUÔN ĐƯỜNG ĐI, KHÔNG SỬ DỤNG DELAY NỮA
+                    app.highlighted_path = path
+                    app.highlighted_color = color
+                    app.render_graph()
 
                 for path_idx, path in enumerate(all_paths):
                     tk.Radiobutton(

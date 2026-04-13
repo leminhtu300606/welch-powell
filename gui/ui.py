@@ -1,5 +1,6 @@
 """gui/ui.py - Khởi tạo bộ khung và phân nhánh giao diện."""
 import tkinter as tk
+from tkinter import messagebox
 from core.events import on_canvas_click, on_canvas_drag, on_canvas_release, on_mouse_wheel, on_toolbar_button_release
 from utils.file_manager import prompt_save_if_needed,save_graph_as,create_new_graph, save_graph_to_file, load_graph_from_file
 from gui.animation_utils import advance_manual_animation, cancel_scheduled_animation
@@ -13,15 +14,40 @@ DEFAULT_ANIMATION_DELAY_MS = 2000
 
 
 def set_auto_mode(app, enabled):
-    app.animation_auto_mode = enabled
-    app.animation_delay_ms = DEFAULT_ANIMATION_DELAY_MS if enabled else None
-    if hasattr(app, "auto_btn"):
-        app.auto_btn.config(text="Tự động: Bật" if enabled else "Tự động: Tắt")
+    # NẾU ĐANG BẬT TỰ ĐỘNG: Kiểm tra xem số nhập vào có hợp lệ không
+    if enabled:
+        try:
+            val = float(app.delay_var.get())
+            if val <= 0:
+                messagebox.showerror("Lỗi nhập liệu", "Thời gian delay phải lớn hơn 0!")
+                return # Dừng lại, không cho bật Auto
+            app.animation_delay_ms = int(val * 1000)
+        except ValueError:
+            messagebox.showerror("Lỗi nhập liệu", "Vui lòng nhập một số hợp lệ (VD: 0.5, 2)!")
+            return # Dừng lại, không cho bật Auto
 
+    app.animation_auto_mode = enabled
+    
+    # Cập nhật trạng thái nút Tự động
+    if hasattr(app, "auto_btn"):
+        app.auto_btn.config(
+            text="Tự động: Bật" if enabled else "Tự động: Tắt",
+            bg="#27ae60" if enabled else "#f39c12"
+        )
+
+    # Kích hoạt / Vô hiệu hóa các thành phần
+    if hasattr(app, "next_step_btn"):
+        if enabled:
+            app.next_step_btn.config(state="disabled", bg="#7f8c8d")
+            app.delay_entry.config(state="normal") # MỞ KHÓA ô nhập
+        else:
+            app.next_step_btn.config(state="normal", bg="#3498db")
+            app.delay_entry.config(state="disabled") # KHÓA ô nhập (Xám đi)
+            app.delay_entry.config(bg="white") # Xóa màu nền đỏ cảnh báo (nếu có)
+            
     if enabled:
         advance_manual_animation(app)
     else:
-        # Khi chuyển sang tay, giữ lại bước đang hẹn để click tiếp tục đúng chỗ.
         cancel_scheduled_animation(app, keep_as_pending=True)
 
 
@@ -190,6 +216,7 @@ def setup_interface(app):
         anchor="w",
     ).pack(fill="x")
 
+    # ... (đoạn code tạo speed_frame cũ) ...
     app.auto_btn = tk.Button(
         speed_frame,
         text="Tự động: Tắt",
@@ -202,6 +229,58 @@ def setup_interface(app):
         command=lambda: set_auto_mode(app, not getattr(app, "animation_auto_mode", False)),
     )
     app.auto_btn.pack(fill="x", pady=(4, 0))
+
+    # BỔ SUNG 1: Biến lưu trữ thời gian delay (mặc định 2s)
+    app.delay_var = tk.StringVar(value="0.5")
+
+    # BỔ SUNG 2: Label và Ô nhập Delay
+    delay_input_frame = tk.Frame(speed_frame, bg="#2c3e50")
+    delay_input_frame.pack(fill="x", pady=(5, 0))
+    
+    tk.Label(delay_input_frame, text="Delay (s):", bg="#2c3e50", fg="white", font=("Arial", 8)).pack(side="left")
+    
+    app.delay_entry = tk.Entry(
+        delay_input_frame, 
+        textvariable=app.delay_var, 
+        width=8, 
+        justify="center",
+        font=("Arial", 9, "bold"),
+        disabledbackground="#bdc3c7" # Đặt màu xám khi bị khóa
+    )
+    app.delay_entry.pack(side="right")
+    app.delay_entry.config(state="disabled") # Mặc định là KHÓA vì ban đầu Auto đang tắt
+
+    # BỔ SUNG 3: Nút Bước tiếp
+    app.next_step_btn = tk.Button(
+        speed_frame,
+        text="⏭ Bước tiếp",
+        bg="#3498db",
+        fg="white",
+        font=("Arial", 9, "bold"),
+        cursor="hand2",
+        width=14,
+        height=1,
+        command=lambda: advance_manual_animation(app),
+    )
+    app.next_step_btn.pack(fill="x", pady=(4, 0))
+    app.next_step_btn.config(state="normal") 
+
+    # Bắt sự kiện người dùng gõ phím sai khi đang bật Auto
+    def on_delay_change(*args):
+        if getattr(app, "animation_auto_mode", False):
+            try:
+                val = float(app.delay_var.get())
+                if val <= 0:
+                    raise ValueError # Ép lỗi nếu là số âm hoặc bằng 0
+                app.animation_delay_ms = int(val * 1000)
+                app.delay_entry.config(bg="white") # Hợp lệ -> nền trắng
+            except ValueError:
+                app.delay_entry.config(bg="#ff9999") # Lỗi -> đổi màu nền thành ĐỎ để cảnh báo
+                
+    app.delay_var.trace_add("write", on_delay_change)
+    # Thiết lập trạng thái ban đầu cho nút Bước tiếp (Vì mặc định auto đang tắt)
+    app.next_step_btn.config(state="normal", bg="#3498db")
+    
 
     app.root.bind("<space>", lambda _event: advance_manual_animation(app))
 

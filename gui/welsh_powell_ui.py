@@ -43,7 +43,7 @@ def run_coloring(app):
         return
 
     max_color, color_groups, coloring_plan = result
-    delay_ms = getattr(app, "animation_delay_ms", 5000)
+    delay_ms = getattr(app, "animation_delay_ms", 2000)
     app.run_btn.config(state="disabled")
 
     def show_result_window():

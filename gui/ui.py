@@ -9,7 +9,7 @@ from gui.dijkstra_ui import setup_dijkstra_ui
 from gui.prim_ui import setup_prim_ui
 from gui.kruskal_ui import setup_kruskal_ui
 
-DEFAULT_ANIMATION_DELAY_MS = 5000
+DEFAULT_ANIMATION_DELAY_MS = 2000
 
 
 def set_auto_mode(app, enabled):
@@ -83,7 +83,7 @@ def setup_interface(app):
 
     def handle_canvas_click(event):
         # Ở chế độ tay, click vào canvas sẽ đi tiếp 1 bước nếu đang chờ.
-        if getattr(app, "animation_delay_ms", None) is None and getattr(app, "pending_animation_step", None) is not None:
+        if not getattr(app, "animation_auto_mode", False) and getattr(app, "pending_animation_step", None) is not None:
             advance_manual_animation(app)
             return
         on_canvas_click(app, event)

@@ -61,7 +61,7 @@ def run_prim_animation(app):
     for widget in app.result_frame.winfo_children():
         widget.destroy()
 
-    delay_ms = getattr(app, "animation_delay_ms", 5000)
+    delay_ms = getattr(app, "animation_delay_ms", 2000)
 
     # ===== TABLE =====
     columns = ["Cạnh chọn", "Trọng số", "Tổng"]

@@ -61,7 +61,7 @@ def run_kruskal_animation(app):
     app.render_graph()
     app.run_btn.config(state="disabled")
 
-    delay_ms = getattr(app, "animation_delay_ms", 5000)
+    delay_ms = getattr(app, "animation_delay_ms", 2000)
 
     # ===== TABLE SETUP =====
     columns = ["Cạnh", "Trọng số", "Trạng thái", "Tổng"]

@@ -83,7 +83,7 @@ def run_dijkstra_animation(app):
         app.tree.heading(label, text=label)
         app.tree.column(label, width=55, anchor='center')
 
-    delay_ms = getattr(app, "animation_delay_ms", 5000)
+    delay_ms = getattr(app, "animation_delay_ms", 2000)
     
     def format_row(row_data, path_pred):
         values = []

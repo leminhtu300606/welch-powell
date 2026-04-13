@@ -1,6 +1,6 @@
 """gui/animation_utils.py - Trợ giúp điều khiển nhịp chạy mô phỏng."""
 
-DEFAULT_ANIMATION_DELAY_MS = 5000
+DEFAULT_ANIMATION_DELAY_MS = 2000
 
 
 def cancel_scheduled_animation(app, keep_as_pending=False):
@@ -29,9 +29,10 @@ def advance_manual_animation(app):
 
 
 def schedule_animation_step(app, next_step):
+    is_auto_mode = getattr(app, "animation_auto_mode", False)
     delay_ms = getattr(app, "animation_delay_ms", DEFAULT_ANIMATION_DELAY_MS)
 
-    if delay_ms is None:
+    if not is_auto_mode:
         cancel_scheduled_animation(app, keep_as_pending=False)
         app.pending_animation_step = next_step
         return

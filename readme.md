@@ -21,9 +21,10 @@
   * **Tương tác hai chiều (Time-travel):** Click vào một bước bất kỳ trên bảng lịch sử để "tua" lại đồ thị, xem chính xác trạng thái nhãn và đường đi tại thời điểm đó.
   * **Lưu vết thông minh:** Tùy chọn giữ lại giá trị lịch sử của các đỉnh đã chốt (hiển thị nền xám) để dễ dàng theo dõi toàn cảnh thuật toán.
 
-* **Giao diện & Trải nghiệm (UI/UX):** * Không gian làm việc vô hạn: Kéo thả đỉnh, phóng to/thu nhỏ (Zoom), dịch chuyển vùng nhìn (Pan).
+* **Giao diện & Trải nghiệm (UI/UX):** Không gian làm việc vô hạn: Kéo thả đỉnh, phóng to/thu nhỏ (Zoom), dịch chuyển vùng nhìn (Pan).
   * Tự động đánh nhãn (A, B, C...) hoặc (1, 2, 3...) và cho phép đổi tên đỉnh tự do. Không cho phép đặt tên trùng lặp.
   * Bẫy lỗi chặt chẽ: Chặn trọng số âm cho Dijkstra, chặn nối cạnh trùng lặp, bắt lỗi chọn thiếu đỉnh...
+* **Điều khiển mô phỏng:** * Tắt chế độ Tự động để bấm ⏭ Bước tiếp (hoặc phím Space) cho mỗi lần thuật toán nới lỏng cạnh/chốt đỉnh. Bật Tự động và nhập số (giây) để phần mềm tự diễn hoạt.
 
 * **Quản lý File & An toàn dữ liệu:** * Hỗ trợ bộ phím tắt chuẩn: `Ctrl+N` (Mới), `Ctrl+O` (Mở), `Ctrl+S` (Lưu nhanh đè file cũ) và `Ctrl+Shift+S` (Lưu bản sao). 
   * Lưu trữ cấu trúc đồ thị dưới định dạng `.svg` (có nhúng JSON).

@@ -2,13 +2,27 @@
 import tkinter as tk
 from core.events import on_canvas_click, on_canvas_drag, on_canvas_release, on_mouse_wheel, on_toolbar_button_release
 from utils.file_manager import prompt_save_if_needed,save_graph_as,create_new_graph, save_graph_to_file, load_graph_from_file
+from gui.animation_utils import advance_manual_animation, cancel_scheduled_animation
 
 from gui.welsh_powell_ui import setup_welsh_powell_ui
 from gui.dijkstra_ui import setup_dijkstra_ui
 from gui.prim_ui import setup_prim_ui
 from gui.kruskal_ui import setup_kruskal_ui
 
-ANIMATION_SPEED_LEVELS = [("Chậm", 1000), ("Vừa", 450), ("Nhanh", 180)]
+DEFAULT_ANIMATION_DELAY_MS = 5000
+
+
+def set_auto_mode(app, enabled):
+    app.animation_auto_mode = enabled
+    app.animation_delay_ms = DEFAULT_ANIMATION_DELAY_MS if enabled else None
+    if hasattr(app, "auto_btn"):
+        app.auto_btn.config(text="Tự động: Bật" if enabled else "Tự động: Tắt")
+
+    if enabled:
+        advance_manual_animation(app)
+    else:
+        # Khi chuyển sang tay, giữ lại bước đang hẹn để click tiếp tục đúng chỗ.
+        cancel_scheduled_animation(app, keep_as_pending=True)
 
 
 def update_tool_button_styles(app):
@@ -31,14 +45,6 @@ def toggle_mode(app, mode):
         app._clear_connection_highlight()
 
     update_tool_button_styles(app)
-
-
-def cycle_animation_speed(app):
-    labels = [lbl for lbl, _ in ANIMATION_SPEED_LEVELS]
-    current = getattr(app, "animation_speed_label", "Vừa")
-    next_index = (labels.index(current) + 1) % len(labels) if current in labels else 1
-    app.animation_speed_label, app.animation_delay_ms = ANIMATION_SPEED_LEVELS[next_index]
-    app.speed_btn.config(text=f"Tốc độ: {app.animation_speed_label}")
 
 
 def add_tool_check(app, text, mode):
@@ -74,6 +80,13 @@ def create_toolbar_button(app, text, bg, command, height=2):
 
 
 def setup_interface(app):
+
+    def handle_canvas_click(event):
+        # Ở chế độ tay, click vào canvas sẽ đi tiếp 1 bước nếu đang chờ.
+        if getattr(app, "animation_delay_ms", None) is None and getattr(app, "pending_animation_step", None) is not None:
+            advance_manual_animation(app)
+            return
+        on_canvas_click(app, event)
 
     # ===== TITLE =====
     if app.algorithm_mode == "welsh_powell":
@@ -159,14 +172,38 @@ def setup_interface(app):
     # ===== COMMON BUTTON =====
     app.run_btn.pack(pady=15)
 
-    app.speed_btn = create_toolbar_button(
-        app,
-        "Tốc độ: Vừa",
-        "#f39c12",
-        lambda: cycle_animation_speed(app),
-        height=1
+    app.animation_auto_mode = False
+    app.animation_delay_ms = None
+    app.pending_animation_step = None
+    app.animation_after_id = None
+    app.scheduled_next_step = None
+
+    speed_frame = tk.Frame(app.toolbar, bg="#2c3e50")
+    speed_frame.pack(fill="x", padx=8, pady=(5, 2))
+
+    tk.Label(
+        speed_frame,
+        text="Chế độ chạy",
+        bg="#2c3e50",
+        fg="white",
+        font=("Arial", 9, "bold"),
+        anchor="w",
+    ).pack(fill="x")
+
+    app.auto_btn = tk.Button(
+        speed_frame,
+        text="Tự động: Tắt",
+        bg="#f39c12",
+        fg="white",
+        font=("Arial", 9, "bold"),
+        cursor="hand2",
+        width=14,
+        height=1,
+        command=lambda: set_auto_mode(app, not getattr(app, "animation_auto_mode", False)),
     )
-    app.speed_btn.pack(pady=5)
+    app.auto_btn.pack(fill="x", pady=(4, 0))
+
+    app.root.bind("<space>", lambda _event: advance_manual_animation(app))
 
     create_toolbar_button(app, "Mới", "#54b5e6" ,lambda: create_new_graph(app),height=1).pack(pady=2)
     create_toolbar_button(app, "Mở", "#9b59b6", lambda: load_graph_from_file(app), height=1).pack(pady=2)
@@ -180,7 +217,7 @@ def setup_interface(app):
     create_toolbar_button(app, "⬅ Quay Lại", "#34495e", lambda: app.on_back_callback(), height=1).pack(pady=2, side="bottom")
 
     # ===== EVENTS =====
-    app.canvas.bind("<Button-1>", lambda e: on_canvas_click(app, e))
+    app.canvas.bind("<Button-1>", handle_canvas_click)
     app.canvas.bind("<B1-Motion>", lambda e: on_canvas_drag(app, e))
     app.canvas.bind("<ButtonRelease-1>", lambda e: on_canvas_release(app, e))
     app.canvas.bind("<MouseWheel>", lambda e: on_mouse_wheel(app, e))

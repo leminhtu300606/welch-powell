@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from algorithms.dijkstra import dijkstra_table_and_paths
+from gui.animation_utils import schedule_animation_step
 
 def setup_dijkstra_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Nối nút (Trọng Số)", "connect")
@@ -82,7 +83,7 @@ def run_dijkstra_animation(app):
         app.tree.heading(label, text=label)
         app.tree.column(label, width=55, anchor='center')
 
-    delay_ms = getattr(app, "animation_delay_ms", 350)
+    delay_ms = getattr(app, "animation_delay_ms", 5000)
     
     def format_row(row_data, path_pred):
         values = []
@@ -174,7 +175,7 @@ def run_dijkstra_animation(app):
             
             app.tree.insert('', tk.END, values=format_row(row_data, current_path_pred))
             app.tree.yview_moveto(1)
-            app.root.after(delay_ms, lambda: animate_table(idx + 1))
+            schedule_animation_step(app, lambda: animate_table(idx + 1))
         else:
             app.current_dijkstra_row = None
             app.render_graph()
@@ -209,7 +210,7 @@ def run_dijkstra_animation(app):
                             if step < len(path):
                                 app.highlighted_path = path[:step+1]
                                 app.render_graph()
-                                app.root.after(delay_ms, lambda: draw_segment(step + 1))
+                                schedule_animation_step(app, lambda: draw_segment(step + 1))
                         draw_segment(0)
                     else:
                         app.highlighted_path = path

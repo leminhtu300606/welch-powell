@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from core.graph_actions import apply_welsh_powell_coloring
+from gui.animation_utils import schedule_animation_step
 
 def setup_welsh_powell_ui(app, add_tool_check, create_toolbar_button):
     add_tool_check(app, "Nối nút", "connect")
@@ -42,7 +43,7 @@ def run_coloring(app):
         return
 
     max_color, color_groups, coloring_plan = result
-    delay_ms = getattr(app, "animation_delay_ms", 350)
+    delay_ms = getattr(app, "animation_delay_ms", 5000)
     app.run_btn.config(state="disabled")
 
     def show_result_window():
@@ -69,6 +70,6 @@ def run_coloring(app):
         current_node, color_value = coloring_plan[index]
         current_node["color"] = color_value
         app.canvas.itemconfig(current_node["circle"], fill=color_value, width=4, outline="#e67e22")
-        app.root.after(delay_ms, lambda: animate_step(index + 1, current_node))
+        schedule_animation_step(app, lambda: animate_step(index + 1, current_node))
 
     animate_step()

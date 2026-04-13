@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from core.graph_actions import run_kruskal_algorithm
+from gui.animation_utils import schedule_animation_step
 
 
 def setup_kruskal_ui(app, add_tool_check, create_toolbar_button):
@@ -60,7 +61,7 @@ def run_kruskal_animation(app):
     app.render_graph()
     app.run_btn.config(state="disabled")
 
-    delay_ms = getattr(app, "animation_delay_ms", 350)
+    delay_ms = getattr(app, "animation_delay_ms", 5000)
 
     # ===== TABLE SETUP =====
     columns = ["Cạnh", "Trọng số", "Trạng thái", "Tổng"]
@@ -114,7 +115,7 @@ def run_kruskal_animation(app):
             )
             app.tree.yview_moveto(1)
 
-            app.root.after(delay_ms, lambda: animate(i + 1))
+            schedule_animation_step(app, lambda: animate(i + 1))
 
         else:
             app.run_btn.config(state="normal")

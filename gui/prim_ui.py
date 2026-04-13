@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from core.graph_actions import run_prim_algorithm
+from gui.animation_utils import schedule_animation_step
 
 
 def setup_prim_ui(app, add_tool_check, create_toolbar_button):
@@ -60,7 +61,7 @@ def run_prim_animation(app):
     for widget in app.result_frame.winfo_children():
         widget.destroy()
 
-    delay_ms = getattr(app, "animation_delay_ms", 350)
+    delay_ms = getattr(app, "animation_delay_ms", 5000)
 
     # ===== TABLE =====
     columns = ["Cạnh chọn", "Trọng số", "Tổng"]
@@ -93,7 +94,7 @@ def run_prim_animation(app):
             app.tree.insert('', tk.END, values=(f"{n1} - {n2}", w, total_weight))
             app.tree.yview_moveto(1)
 
-            app.root.after(delay_ms, lambda: animate(i + 1))
+            schedule_animation_step(app, lambda: animate(i + 1))
 
         else:
             app.run_btn.config(state="normal")
